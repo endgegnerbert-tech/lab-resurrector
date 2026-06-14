@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LabResurrector — AI Physics Lab</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Top Bar -->
+    <header id="topbar">
+      <h1>🧪 LabResurrector</h1>
+      <span class="subtitle">AI-gestütztes Physiklabor</span>
+      <div class="experiment-selector">
+        <label for="sim-select">Experiment:</label>
+        <select id="sim-select">
+          <option value="pendulum">Pendel</option>
+          <option value="projectile">Schiefer Wurf</option>
+        </select>
+      </div>
+      <div class="phase-indicator" id="phase-indicator">
+        <span class="phase active" data-phase="hypothesis">🤔 Hypothese</span>
+        <span class="phase" data-phase="experiment">🔬 Test</span>
+        <span class="phase" data-phase="reflection">💡 Reflexion</span>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="main">
+      <!-- Simulation Canvas -->
+      <section id="sim-section">
+        <canvas id="sim-canvas"></canvas>
+        <div id="sim-overlay">
+          <div id="sim-controls">
+            <button id="btn-play" title="Play/Pause">⏸</button>
+            <button id="btn-reset" title="Reset">🔄</button>
+          </div>
+          <div id="param-panel">
+            <!-- Dynamisch befüllt -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat Panel -->
+      <section id="chat-section">
+        <div id="chat-header">
+          <span>🤖 pi Agent</span>
+          <button id="btn-deepdive" title="Deep Research">🔍 Research</button>
+        </div>
+        <div id="chat-messages">
+          <!-- Willkommensnachricht wird per JS eingefügt -->
+        </div>
+        <div id="chat-input-area">
+          <textarea id="chat-input" rows="2" placeholder="Antworte dem AI-Experimentleiter..."></textarea>
+          <button id="chat-send">Senden</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+
+  <!-- App Modules -->
+  <script src="js/sim/engine.js"></script>
+  <script src="js/sim/pendulum.js"></script>
+  <script src="js/sim/projectile.js"></script>
+  <script src="js/ws/client.js"></script>
+  <script src="js/chat/panel.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "spaces": [
+    {
+      "id": "example-pendulum",
+      "title": "Pendelperiode untersuchen",
+      "path": "/experiments/spaces/example-pendulum/",
+      "domain": "physics",
+      "concepts": ["Pendel", "Periodendauer", "Gravitation", "Harmonische Schwingung"],
+      "createdAt": "2026-06-14T00:00:00Z"
+    }
+  ]
+}

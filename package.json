@@ -1,0 +1,16 @@
+{
+  "name": "lab-resurrector",
+  "version": "1.0.0",
+  "description": "AI-gestütztes Virtual Lab — powered by pi",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "pi": "node server.js"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "^0.79.3",
+    "express": "^4.21.0",
+    "typebox": "^1.2.9",
+    "ws": "^8.18.0"
+  }
+}
