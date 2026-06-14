@@ -164,6 +164,28 @@ const PendulumScene = (() => {
     };
   }
 
+  // ── Get Measurements ──────────────────────────
+  function getMeasurements(engine) {
+    if (!bob) return null;
+    const vel = bob.velocity;
+    const speed = Math.hypot(vel.x, vel.y);
+    const L = params.length;
+    const g = params.gravity;
+    const ke = 0.5 * params.mass * speed * speed;
+    // PE relativ zum tiefsten Punkt
+    const rodLenPx = params.length * 30;
+    const lowestY = pivotPos.y + rodLenPx;
+    const height = Math.max(0, (lowestY - bob.position.y) / 30);
+    const pe = params.mass * g * height;
+    return {
+      velocity: Math.round(speed * 100) / 100,
+      speed: Math.round(speed * 100) / 100,
+      energy: Math.round((ke + pe) * 100) / 100,
+      position_y: Math.round((bob.position.y / 30) * 100) / 100,
+      period_formula: Math.round(2 * Math.PI * Math.sqrt(L / g) * 100) / 100
+    };
+  }
+
   // ── Highlight ──────────────────────────────────
   function highlight(engine, elementName) {
     if (elementName === 'bob' && bob) {
@@ -304,6 +326,7 @@ const PendulumScene = (() => {
     setParam,
     getBodyRefs,
     getParams,
+    getMeasurements,
     highlight,
     render,
     destroy

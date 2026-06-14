@@ -6,10 +6,22 @@
   <title>flabs — physics playground</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
+<body class="with-demo-banner">
 <body>
   <div id="app">
     <!-- LAUNCHPAD VIEW -->
     <div id="view-launchpad" class="view active">
+      <div id="demo-banner">
+        <span>🧪 <strong>DSH Hacks 2026 Demo</strong></span>
+        <span class="sep">·</span>
+        <span>Your API key stays in your browser</span>
+        <span class="sep">·</span>
+        <a href="SECURITY.md" target="_blank" rel="noopener">Security</a>
+        <span class="sep">·</span>
+        <a href="plan/vision.md" target="_blank" rel="noopener">Vision</a>
+        <span class="sep">·</span>
+        <a href="https://github.com/einarjaeger/flabs" target="_blank" rel="noopener">GitHub</a>
+      </div>
       <header id="launchpad-header">
         <div class="brand">
           <h1>flabs</h1>
@@ -29,9 +41,46 @@
       </div>
     </div>
 
+    <div id="auth-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-auth="true"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="auth-modal-title">
+        <div class="modal-header">
+          <h2 id="auth-modal-title">Connect your AI</h2>
+          <button id="btn-auth-close" class="btn-ghost btn-modal-close" type="button">×</button>
+        </div>
+        <p class="modal-subtitle">pi needs the provider first. A raw API key alone is not enough.</p>
+        <form id="auth-form">
+          <label class="field">
+            <span>Provider</span>
+            <select id="auth-provider" required></select>
+          </label>
+          <label class="field">
+            <span>Model</span>
+            <select id="auth-model"></select>
+          </label>
+          <label class="field">
+            <span>API key</span>
+            <input id="auth-api-key" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your provider key" required>
+          </label>
+          <label class="field field-checkbox">
+            <input id="auth-remember" type="checkbox">
+            <span>Remember on this device</span>
+          </label>
+          <p id="auth-storage-note" class="field-note">Default: key stays only for this browser session.</p>
+          <div class="modal-actions">
+            <button id="btn-auth-clear" class="btn-ghost hidden" type="button">Clear key</button>
+            <div class="modal-actions-right">
+              <button class="btn-ghost" type="button" data-close-auth="true">Cancel</button>
+              <button id="btn-auth-save" class="btn-primary" type="submit">Connect</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- SPACE VIEW -->
     <div id="view-space" class="view">
-      <header id="space-header">
+      <header id="space-header" style="padding-top:0.45rem">
         <button id="btn-back" class="btn-ghost">← Back</button>
         <div class="space-title-group">
           <h2 id="space-title"></h2>
@@ -100,8 +149,7 @@
     </div>
   </div>
 
-  <script src="js/ws/client.js"></script>
-  <script src="js/chat/panel.js"></script>
+  <script src="js/ai/agent.js"></script>
   <script src="js/experiment/api.js"></script>
   <script src="js/main.js"></script>
 </body>

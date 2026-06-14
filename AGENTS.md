@@ -15,10 +15,10 @@ Die alte `plan/architecture.md` ist historisch. Die aktuelle Architektur ist `se
 
 ## Erlaubte Ordner (Schreibgrenzen)
 
-Agent darf **nur** in diesen Ordnern schreiben/ändern:
+Agent darf bei expliziten Implementierungsaufgaben **nur** in diesen Ordnern schreiben/ändern:
 
 ```
-experiments/spaces/<space-id>/   — generierte Experiment-Spaces
+experiments/spaces/<space-id>/   — vom Menschen angelegte Clean-Slate-Spaces / später ausgearbeitete Experimente
 sources/                          — katalogisierte OSS-Quellen
 builder/templates/                — Vorlagen für Space-Generierung
 builder/schemas/                  — JSON-Schemata
@@ -26,13 +26,14 @@ plan/                             — Plan-Dokumentation (nur Agent-Regeln)
 ```
 
 **Nicht erlaubt:**
-- Projektroot überschreiben (`server.js`, `index.html`, `package.json`)
+- Projektroot überschreiben (`server.js`, `index.html`, `package.json`) ausser bei expliziter Freigabe
 - `.env` lesen oder schreiben
-- `node_modules/` ändern
+- Root-`node_modules/` ändern
 - Schreiben ausserhalb des Repos
 - Absolute Pfade oder `../`
 - Shell-Kommandos ohne Allowlist
 - Beliebige CDN-Skripte (nur matter-js/p5.js erlaubt, besser lokales Vendor)
+- Ungeprüfte GitHub-Repos direkt kopieren; unbekannte Lizenz bleibt Inspiration/Formel/Pattern
 
 ## Experiment-Space Struktur
 
@@ -46,12 +47,23 @@ experiments/spaces/<space-id>/
 └── sources.json      — verbaute Quellen mit Lizenz
 ```
 
-## Quellen (sources/)
+## Quellen, Grounding und emet
 
 Jeder Eintrag in `sources/catalog.json` muss enthalten:
 - name, url, license, version/commit, usage (Dependency | Inspiration | Formula | Template)
 
 Unbekannte Lizenz = keine Codeübernahme. Nur Inspiration/Formel/Pattern erlaubt.
+
+Der App-Agent in `server.js` enthält eigene Physik-Grounding-Tools und nutzt `@black-knight.dev/emet` als normale App-Abhängigkeit aus `package.json`. Es gibt bewusst **kein** projektlokales `.pi/settings.json` und kein `.pi`-Package für emet, damit der Entwickler-CLI-`pi` keine Tool-Konflikte bekommt.
+
+Workflow:
+
+1. Erst lokale Formeln/Quellen prüfen (`physics_formula_lookup`, `physics_source_policy`).
+2. Bei unsicheren/aktuellen Fragen `emet` mit autoritativen Quellen nutzen.
+3. Vor Space-Dateien `physics_model_plan` nutzen.
+4. Jede Simulation muss Parameter, Messwerte, Formeln, Gültigkeitsgrenzen und `sources.json` haben.
+
+PhET/phetsims = didaktischer Goldstandard, aber Code nur nach konkreter Lizenzprüfung übernehmen. CamGomezDev/physics-lab bleibt bis Lizenzprüfung Inspiration-only.
 
 ## Verifikation (vor Abschluss jeder Änderung)
 
@@ -93,10 +105,24 @@ Nach jeder Codeänderung:
 1. **Chat** → User-Anfrage verstehen
 2. **Nachfragen** → wenn unklar, erst fragen
 3. **Retrieval** → Quelle aus `sources/catalog.json` oder `builder/templates/`
-4. **Build** → Space unter `experiments/spaces/` generieren
-5. **Verify** → Space-Verifikation durchlaufen
-6. **Register** → in `experiments/manifest.json` eintragen
+4. **Space Lifecycle** → Mensch erstellt neue Clean-Slate-Spaces im Menü/API
+5. **Assist** → Agent arbeitet nur im aktuell ausgewählten Space oder erklärt Quick-Sims
+6. **Verify** → Space-Verifikation durchlaufen, falls Dateien geändert wurden
 7. **Open** → Space im Browser laden
+
+## Runtime-Agent-Tools
+
+Im Schülerflow sollen bevorzugt nur sichere Custom Tools aktiv sein:
+
+- `source_search`
+- `space_get_current`
+- `space_write_current_file`
+- `space_verify_current`
+- Simulations-Tools wie `sim_set_param`, `sim_reset`
+- App-lokale Physik-Grounding-Tools aus `server.js`
+- App-lokales `emet` für aktuelle/unsichere Recherche mit Quellen
+
+Generische `bash/write/edit/read` Tools gehören nicht in den Runtime-Schülerflow.
 
 ## Nicht-Ziele
 
@@ -118,7 +144,7 @@ Nach jeder Codeänderung:
 - `server.js` existiert (Node/Express/WebSocket/pi SDK)
 - `index.html`, `js/`, `css/` existieren
 - `experiments/` existiert (leer)
-- `sources/` fehlt noch
-- `builder/` fehlt noch
+- `sources/` existiert mit Katalog/Formeln
+- `builder/` existiert mit Schemas/Templates
 - `backend/` fehlt (kein FastAPI)
 - Alte `plan/architecture.md` ist historisch, nicht aktuell

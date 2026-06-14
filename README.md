@@ -156,16 +156,24 @@ npm start
 # → http://localhost:3210
 ```
 
-### 2. Enter Your API Key (to activate the AI)
+### 2. Connect Your Model (to activate the AI)
 
-flabs works with 50+ AI models. No API key is hardcoded in the server. After opening the app, click the **key icon** in the top bar and paste your API key:
-- OpenAI (`sk-...`), Anthropic (`sk-ant-...`), DeepSeek (`sk-...`)
-- Groq (`gsk_...`), Google (`AIza...`)
-- Or any provider supported by the pi SDK
+flabs works with 50+ AI models. No API key is hardcoded in the server. After opening the app, click the **key icon** in the top bar, then:
+- choose your **provider** first (required by the pi SDK)
+- choose a **model** for that provider
+- paste your **API key**
 
-Your key stays in your browser's localStorage. It is sent to the flabs server in memory only (never written to disk, never shared). If you refresh the page, your key is still there.
+Examples:
+- OpenAI (`sk-...`)
+- Anthropic (`sk-ant-...`)
+- DeepSeek (`sk-...`)
+- Groq (`gsk_...`)
+- Google (`AIza...`)
+- or another supported pi SDK provider
 
-**Without an API key:** The app works in full demo mode. All physics experiments, controls, data panels, measurements and exports work. Only the AI chat shows a prompt to enter a key.
+By default, your key stays only for the current browser session. You can explicitly choose **Remember on this device** to keep it in localStorage. In all cases, the key is sent to the flabs server in memory only and is never written to disk by flabs.
+
+**Without an API key:** The app works in full demo mode. All physics experiments, controls, data panels, measurements and exports work. Only the AI chat stays inactive.
 
 ### 3. Use the Lab
 
@@ -298,6 +306,8 @@ Drag the sliders (pressure, water ratio, launch angle for the rocket) — the si
 **Step 4: Chat with the AI** 💬
 Type a question or hypothesis in the chat box. The AI responds and can **change parameters live** — for example:
 > *"Set pressure to 5 bar and launch at 60°"* → the sliders move, the rocket flies
+
+Note: for browser-provided API keys, you must choose the provider first. pi does **not** safely infer the provider from a raw key string.
 
 ### Without an AI Model (Demo Mode)
 

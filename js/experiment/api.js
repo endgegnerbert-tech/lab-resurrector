@@ -134,7 +134,17 @@
         const row = document.createElement('div');
         row.className = 'value-row';
         row.dataset.key = key;
-        row.innerHTML = '<span class="value-label">' + label + ':</span><span class="value-number">' + display + '</span>';
+
+        const labelEl = document.createElement('span');
+        labelEl.className = 'value-label';
+        labelEl.textContent = label + ':';
+
+        const numberEl = document.createElement('span');
+        numberEl.className = 'value-number';
+        numberEl.textContent = display;
+
+        row.appendChild(labelEl);
+        row.appendChild(numberEl);
         liveValuesEl.appendChild(row);
       }
     });

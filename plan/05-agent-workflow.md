@@ -17,11 +17,11 @@ Quellen/Bausteine abrufen
   ↓
 Experiment planen
   ↓
-Space erzeugen oder vorhandenen Space öffnen/verändern
+falls nötig: User bittet im Menü einen neuen Space zu erstellen
   ↓
-Space verifizieren
+vorhandenen/ausgewählten Space öffnen oder fachlich ausarbeiten
   ↓
-Space registrieren
+Änderungen verifizieren, falls Code/Manifest geändert wurde
   ↓
 Simulation + Daten + Formel erklären
 ```
@@ -55,17 +55,20 @@ Der Agent nutzt nicht live GitHub, sondern lokale Quellen:
 - `sources/formulas/*.json`
 - `builder/templates/*`
 
-## Builder Tools Zielbild
+## Agent-/Space-Tools Zielbild
 
-Neue Tools im Node/pi-Server:
+Tools im Node/pi-Server:
 
-- `source_search(query)`
-- `source_get(id)`
-- `space_create(id, title)`
-- `space_write_file(spaceId, path, content)`
-- `space_register(spaceId)`
-- `space_verify(spaceId)`
-- `space_open(spaceId)`
+- `source_search(query)` — lokale Quellen/Formeln/Bausteine suchen
+- `space_get_current()` — ausgewählten Space lesen
+- `space_write_current_file(file, content)` — nur erlaubte Dateien im ausgewählten Space schreiben
+- `space_verify_current()` — Pflichtdateien und JSON prüfen
+
+Nicht als Agent-Tool:
+
+- kein autonomes `space_create`; neue Spaces erstellt der Mensch im Menü
+- kein autonomes `space_register`; Registrierung passiert über die Space-API nach User-Aktion
+- keine generischen `bash/write/edit/read` Runtime-Tools im Schülerflow
 
 ## Qualitätsregel
 

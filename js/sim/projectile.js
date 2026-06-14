@@ -175,6 +175,25 @@ const ProjectileScene = (() => {
     };
   }
 
+  // ── Get Measurements ──────────────────────────
+  function getMeasurements(engine) {
+    if (!ball) return null;
+    const vel = ball.velocity;
+    const speed = Math.hypot(vel.x, vel.y);
+    const ke = 0.5 * params.mass * speed * speed;
+    const pe = params.mass * params.gravity * Math.max(0, (groundY - ball.position.y) / 30);
+    const angleRad = params.angle * Math.PI / 180;
+    const range = (params.speed * params.speed * Math.sin(2 * angleRad)) / params.gravity;
+    return {
+      velocity: Math.round(speed * 100) / 100,
+      speed: Math.round(speed * 100) / 100,
+      energy: Math.round((ke + pe) * 100) / 100,
+      position_x: Math.round(((ball.position.x - launchPoint.x) / 30) * 100) / 100,
+      position_y: Math.round(((groundY - ball.position.y) / 30) * 100) / 100,
+      range_formula: Math.round(range * 100) / 100
+    };
+  }
+
   // ── Highlight ──────────────────────────────────
   function highlight(engine, elementName) {
     if (elementName === 'ball' && ball) {
@@ -336,6 +355,7 @@ const ProjectileScene = (() => {
     setParam,
     getBodyRefs,
     getParams,
+    getMeasurements,
     highlight,
     render,
     destroy,

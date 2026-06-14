@@ -18,6 +18,7 @@ const SimEngine = (() => {
 
   // Body-References für Live-Parameter
   let bodyRefs = {};
+  let frameCount = 0;
 
   // ── Init ───────────────────────────────────────
   function init(canvasEl) {
@@ -81,6 +82,16 @@ const SimEngine = (() => {
           }
         }
       }
+
+      // Emit measurements every 10 frames (~6x/sec) wenn running
+      frameCount++;
+      if (isRunning && frameCount % 10 === 0 && currentScene && currentScene.getMeasurements) {
+        const measurements = currentScene.getMeasurements(engine);
+        if (measurements && window.ExperimentAPI) {
+          window.ExperimentAPI.emitMeasurement(measurements);
+        }
+      }
+
       requestAnimationFrame(gameLoop);
     }
     gameLoop();

@@ -57,19 +57,25 @@ Jedes Template unterstützt:
 - Messwerte
 - Formel-Metadaten
 
-## Phase 5 — Agent Tools
+## Phase 5 — Space Lifecycle + Agent Assist
 
-In `server.js` neue Tools:
+Entscheidung nach Review: **Der Mensch erstellt neue Spaces im Menü.**
 
-- `source_search`
-- `source_get`
-- `space_create`
-- `space_write_file`
-- `space_verify`
-- `space_register`
-- `space_open`
+Warum: Ein Space ist ein neuer sauberer Arbeitsraum; der User soll bewusst entscheiden, wann ein neuer Arbeitsraum entsteht. Der Agent soll nicht autonom neue Projekte anlegen.
 
-Alte Tools wie `sim_build_experiment` ersetzen oder umbauen.
+In `server.js`:
+
+- `GET /api/spaces` — Space-Liste
+- `POST /api/spaces` — Mensch erstellt Clean-Slate-Space aus dem Menü
+- `GET /api/spaces/:id/manifest` — Space-Manifest
+- Agent-Tool `source_search` — lokale Quellen/Formeln/Bausteine finden
+
+Nicht als Agent-Tool:
+
+- kein autonomes `space_create`
+- kein autonomes `space_register`
+
+Später möglich: Agent darf **innerhalb des aktuell ausgewählten Space** Änderungen vorschlagen/ausführen, aber nur nach User-Bestätigung und Verify Gate.
 
 ## Phase 6 — Source Library vorbereiten
 

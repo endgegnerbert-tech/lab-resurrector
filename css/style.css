@@ -30,6 +30,116 @@ html, body { height: 100%; overflow: hidden; }
 
 .hidden { display: none !important; }
 
+/* ── Modal ──────────────────────────────── */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+.modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 7, 12, 0.78);
+  backdrop-filter: blur(4px);
+}
+.modal-card {
+  position: relative;
+  z-index: 1;
+  width: min(520px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.modal-header h2 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+.btn-modal-close {
+  padding: 0.2rem 0.55rem;
+  font-size: 1rem;
+  line-height: 1;
+}
+.modal-subtitle {
+  margin-top: 0.35rem;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+#auth-form {
+  margin-top: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.field span {
+  color: var(--text-dim);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.field input,
+.field select {
+  width: 100%;
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.85rem;
+  outline: none;
+}
+.field input:focus,
+.field select:focus {
+  border-color: var(--accent);
+}
+.field-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 0.55rem;
+}
+.field-checkbox input {
+  width: auto;
+}
+.field-checkbox span {
+  font-size: 0.82rem;
+  color: var(--text);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.field-note {
+  color: var(--text-dim);
+  font-size: 0.72rem;
+}
+.modal-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.2rem;
+}
+.modal-actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 /* ── Buttons ─────────────────────────────── */
 .btn-primary {
   background: var(--accent);
@@ -120,11 +230,35 @@ html, body { height: 100%; overflow: hidden; }
   font-family: 'Inter', system-ui, sans-serif;
 }
 
+#demo-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 2rem;
+  background: rgba(124, 108, 240, 0.08);
+  border-bottom: 1px solid rgba(124, 108, 240, 0.13);
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+  z-index: 1;
+  position: relative;
+}
+#demo-banner .sep {
+  color: rgba(124,108,240,0.2);
+}
+#demo-banner a {
+  color: var(--accent);
+  text-decoration: none;
+}
+#demo-banner a:hover {
+  text-decoration: underline;
+}
+
 #launchpad-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.2rem 2rem;
+  padding: 0.8rem 2rem;
   flex-shrink: 0;
   position: relative;
   z-index: 1;
@@ -662,4 +796,11 @@ html, body { height: 100%; overflow: hidden; }
 @media (max-width: 500px) {
   #card-grid { grid-template-columns: 1fr; }
   #launchpad-header { padding: 1rem; }
+  .modal-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .modal-actions-right {
+    justify-content: flex-end;
+  }
 }
