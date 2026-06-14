@@ -208,6 +208,16 @@ A deployed instance may be running at your Render URL. To deploy your own:
 
 Render's free tier puts the server to sleep after 15 minutes of inactivity. The first visit after sleep takes 30-60 seconds to wake up (cold start).
 
+### 🛌 Preventing Cold Starts
+
+The server has a built-in self-ping every 10 minutes, but this **only works while the process is already running**. If no external request arrives for 15 minutes, Render shuts the process down completely.
+
+**Solution:** Use a free external uptime monitor to ping `/api/health` every 5–10 minutes:
+- **[UptimeRobot](https://uptimerobot.com)** (free: 50 monitors, 5 min interval) — set & forget
+- **[cron-job.org](https://cron-job.org)** (free, 1 min interval)
+
+Set the monitor to ping `https://dein-service.onrender.com/api/health` every 5 minutes. The server stays awake and responds instantly.
+
 ## Project Structure
 
 ```
