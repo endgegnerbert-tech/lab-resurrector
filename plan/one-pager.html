@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>flabs — One-Pager | DSH Hacks V1</title>
+<style>
+  @page { margin: 1.2cm; size: A4; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', 'SF Pro', system-ui, -apple-system, sans-serif;
+    font-size: 10pt;
+    line-height: 1.5;
+    color: #111;
+    background: #fff;
+    padding: 1.2cm;
+    max-width: 21cm;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20pt; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 0.1cm; }
+  .subtitle { font-size: 10pt; color: #555; margin-bottom: 0.6cm; }
+  .meta { font-size: 8.5pt; color: #777; margin-bottom: 0.8cm; display: flex; gap: 1cm; flex-wrap: wrap; }
+  .meta a { color: #2563eb; text-decoration: none; }
+  .meta a:hover { text-decoration: underline; }
+  h2 { font-size: 12pt; font-weight: 700; margin-top: 0.5cm; margin-bottom: 0.2cm; border-bottom: 1.5px solid #333; padding-bottom: 0.05cm; }
+  h3 { font-size: 10.5pt; font-weight: 700; margin-top: 0.3cm; margin-bottom: 0.1cm; }
+  p { margin-bottom: 0.2cm; }
+  ul, ol { margin-left: 0.5cm; margin-bottom: 0.2cm; }
+  li { margin-bottom: 0.05cm; }
+  table { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 0.2cm 0; }
+  th, td { border: 1px solid #ccc; padding: 0.1cm 0.2cm; text-align: left; }
+  th { background: #f5f5f5; font-weight: 700; }
+  code { font-family: 'JetBrains Mono', 'SF Mono', monospace; font-size: 8.5pt; background: #f0f0f0; padding: 0.05cm 0.15cm; border-radius: 2px; }
+  .tag { display: inline-block; font-size: 7.5pt; padding: 0.05cm 0.2cm; border-radius: 3px; background: #e8f4f8; color: #0369a1; margin: 0.05cm; font-weight: 600; }
+  .section { page-break-inside: avoid; }
+  strong { color: #000; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4cm; }
+  @media print {
+    body { padding: 0; }
+    .section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>flabs — AI Physics Playground</h1>
+<div class="subtitle">DSH Hacks V1 | AI x STEM Education</div>
+<div class="meta">
+  <span>Student: endgegnerbert-tech</span>
+  <span><a href="https://lab-resurrector.onrender.com">Live Demo</a></span>
+  <span><a href="https://github.com/endgegnerbert-tech/lab-resurrector">GitHub</a></span>
+  <span><a href="https://dsh-hacks-v1.devpost.com">Devpost</a></span>
+</div>
+
+<!-- ===== CORE ===== -->
+<div class="section">
+<h2>How It Works</h2>
+<p>No phases. No templates. The agent builds experiments directly.</p>
+<ol>
+  <li><strong>Student requests</strong> an experiment via the AI chat</li>
+  <li>Agent calls <code>physics_formula_lookup</code> + <code>physics_model_plan</code> against a local library of <strong>30+ verified physics formulas</strong> (sources: myphysicslab, OSP, matter-js)</li>
+  <li>Agent calls <code>emet</code> if local knowledge is insufficient — fetches <strong>cited, authoritative physics</strong> from live sources (arXiv, papers, educational databases)</li>
+  <li>Agent writes <strong>four files</strong> into the experiment space: <code>experiment.json</code> (parameters+measurements), <code>index.html</code> (sandboxed iframe), <code>sketch.js</code> (Canvas 2D physics engine + measurement emission), <code>sources.json</code> (license-safe attribution)</li>
+  <li>Agent calls <code>space_verify_current</code> — validates all files before declaring success</li>
+  <li><strong>Experiment runs live</strong> in the browser. Student adjusts parameters, watches measurements, asks follow-ups.</li>
+</ol>
+<p class="tag" style="margin-left:0.5cm;">Pipeline: request → grounded lookup → write → verify → live in seconds</p>
+</div>
+
+<!-- ===== KEY DIFFERENCE ===== -->
+<div class="section">
+<h2>What Makes This Different</h2>
+<div class="two-col">
+<div>
+<h3>No Phased Flow</h3>
+<p>The agent does not ask "what phase do you want". It builds the complete experiment, validates it, and presents it. The student starts interacting immediately.</p>
+</div>
+<div>
+<h3>Built-in Physics Grounding</h3>
+<p>Every formula has validity limits, units, and source IDs. The agent never invents physics. When local knowledge is insufficient, <code>emet</code> provides cited research.</p>
+</div>
+<div>
+<h3>Bring Your Own API Key</h3>
+<p>Zero server-side secrets. Each browser creates an ephemeral pi agent session with the user's own key. No signup, no shared accounts, no vendor lock-in.</p>
+</div>
+<div>
+<h3>Agent Builds Experiments From Scratch</h3>
+<p>Not a template picker. The agent writes real Canvas 2D simulation code with correct physics. Every experiment is a fresh, isolated iframe sandbox.</p>
+</div>
+</div>
+</div>
+
+<!-- ===== TOOLS ===== -->
+<div class="section">
+<h2>12 Custom AI Tools</h2>
+<table>
+  <tr><th>Tool</th><th>What It Does</th></tr>
+  <tr><td><code>sim_set_param</code></td><td>Change any physics parameter live (mass, angle, pressure, etc.)</td></tr>
+  <tr><td><code>sim_get_state</code></td><td>Read current simulation state</td></tr>
+  <tr><td><code>sim_switch_scene</code></td><td>Switch between experiment types</td></tr>
+  <tr><td><code>sim_reset</code></td><td>Reset to defaults</td></tr>
+  <tr><td><code>sim_highlight</code></td><td>Highlight elements in the simulation</td></tr>
+  <tr><td><code>source_search</code></td><td>Search the local physics formula library</td></tr>
+  <tr><td><code>physics_formula_lookup</code></td><td>Get grounded formulas with validity limits, units, source IDs</td></tr>
+  <tr><td><code>physics_source_policy</code></td><td>Check license/usage policy for any OSS physics source</td></tr>
+  <tr><td><code>physics_model_plan</code></td><td>Plan parameters, measurements, and model limits for a concept</td></tr>
+  <tr><td><code>emet</code></td><td>Live cited research (arXiv, papers, educational sources)</td></tr>
+  <tr><td><code>space_write_current_file</code></td><td>Write experiment files (index.html, sketch.js, etc.)</td></tr>
+  <tr><td><code>space_verify_current</code></td><td>Validate all space files after editing</td></tr>
+</table>
+<p>Plus pi SDK built-in tools: <code>bash</code>, <code>write</code>, <code>edit</code>, <code>read</code>.</p>
+</div>
+
+<!-- ===== FORMULAS ===== -->
+<div class="section">
+<h2>Built-in Formula Library</h2>
+<table>
+  <tr><th>Domain</th><th>Formulas</th></tr>
+  <tr><td>Mechanics</td><td>Pendulum period (small+large angle), Hooke's law, Newton's laws, projectile motion, conservation of energy/momentum, friction, spring oscillation</td></tr>
+  <tr><td>Waves</td><td>Wave equation, superposition, standing waves, Doppler effect, double-slit interference, single-slit diffraction</td></tr>
+  <tr><td>Optics</td><td>Snell's law, lens equation, magnification, Brewster's angle, total internal reflection</td></tr>
+  <tr><td>Electricity</td><td>Ohm's law, Coulomb's law, Kirchhoff's rules, RC circuits, power equation</td></tr>
+</table>
+<p>Each entry includes: formula, variables with units, validity conditions, example calculation, and source IDs with verified license status.</p>
+</div>
+
+<!-- ===== MODEL ECONOMICS ===== -->
+<div class="section">
+<h2>AI Model Choices</h2>
+<p>Developed and tested with <strong>DeepSeek V4 Flash</strong> ($0.14/$0.28 per 1M tokens — the cheapest model with reliable tool calling). But every user chooses their own model.</p>
+<table>
+  <tr><th>Model</th><th>Input / 1M tok</th><th>Output / 1M tok</th><th>Best For</th></tr>
+  <tr><td>DeepSeek V4 Flash</td><td>$0.14</td><td>$0.28</td><td>Budget agent tasks</td></tr>
+  <tr><td>Gemini 2.0 Flash</td><td>$0.10</td><td>$0.40</td><td>Large context (1M tokens)</td></tr>
+  <tr><td>GPT-4o mini</td><td>$0.15</td><td>$0.60</td><td>Balanced quality/price</td></tr>
+  <tr><td>Claude Haiku 3.5</td><td>$1.00</td><td>$5.00</td><td>Reliability</td></tr>
+  <tr><td>DeepSeek V4 Pro</td><td>$0.32</td><td>$0.64</td><td>Higher quality reasoning</td></tr>
+</table>
+<p>The pi SDK supports 50+ providers. Users pick their price/quality balance.</p>
+</div>
+
+<!-- ===== ARCHITECTURE ===== -->
+<div class="section">
+<h2>Architecture</h2>
+<pre style="font-size:8.5pt;background:#f8f8f8;padding:0.3cm;border-radius:4px;border:1px solid #ddd;">
+Browser (Canvas UI + Chat + Controls)
+       | WebSocket (JSON streaming)
+Node.js Server (Express + ws + REST API)
+       | pi SDK AgentSession
+12 Custom Physics Tools + emet + pi built-in tools
+       | User's AI Model (DeepSeek, Claude, Gemini, Ollama...)
+</pre>
+<p>Key property: <strong>server holds zero secrets</strong>. API keys set via <code>authStorage.setRuntimeApiKey()</code> per browser session — ephemeral, in-memory, never written to disk.</p>
+</div>
+
+<!-- ===== TECH STACK ===== -->
+<div class="section">
+<h2>Tech Stack</h2>
+<p>
+  <span class="tag">pi-coding-agent SDK</span>
+  <span class="tag">emet (live research)</span>
+  <span class="tag">Node.js 26</span>
+  <span class="tag">Express 4.21</span>
+  <span class="tag">ws 8.18 (WebSocket)</span>
+  <span class="tag">TypeBox</span>
+  <span class="tag">Canvas 2D API</span>
+  <span class="tag">HTML5 / CSS3</span>
+  <span class="tag">localStorage Web API</span>
+  <span class="tag">Render</span>
+  <span class="tag">GitHub</span>
+  <span class="tag">DeepSeek V4 Flash</span>
+  <span class="tag">JSON / CSV</span>
+  <span class="tag">macOS / Linux</span>
+</p>
+<p><em>Zero external frontend dependencies. No React, no Vue, no jQuery, no Bootstrap. No CDN scripts. All physics is hand-written Canvas 2D.</em></p>
+</div>
+
+<!-- =ada ===== INCLUDED EXPERIMENTS ===== -->
+<div class="section">
+<h2>Included Experiments</h2>
+<ul>
+  <li><strong>Water Rocket:</strong> Realistic 2-bottle rocket with pressure thrust, Tsiolkovsky rocket equation, projectile motion. Parameters: pressure (1-6 bar), water ratio (10-80%), launch angle (10-80°).</li>
+  <li><strong>Wave Interference:</strong> Two coherent point sources with visible superposition. Parameters: wavelength, source distance, phase shift, amplitude. Shows constructive/destructive interference.</li>
+</ul>
+</div>
+
+<!-- ===== LIVE DEMO ===== -->
+<div class="section">
+<h2>Try It Now</h2>
+<p><strong><a href="https://lab-resurrector.onrender.com">https://lab-resurrector.onrender.com</a></strong></p>
+<p>Open in any browser. Two experiments included. Create your own lab and describe what you want. Enter your own API key to activate the AI assistant.</p>
+</div>
+
+</body>
+</html>
