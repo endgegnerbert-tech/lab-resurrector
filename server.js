@@ -9,7 +9,6 @@ import express from 'express';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs';
-import http from 'http';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3210;
@@ -156,28 +155,9 @@ async function main() {
     }
   });
 
-  const server = app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log('http://localhost:' + PORT);
   });
-
-  // ── Render Keep-Alive ───────────────────────
-  // Self-ping every 10 minutes to prevent Render free-tier sleep.
-  // Render spins down after ~15 min of inactivity.
-  const SELF_URL = process.env.RENDER_EXTERNAL_URL
-    ? process.env.RENDER_EXTERNAL_URL
-    : 'http://localhost:' + PORT;
-
-  function selfPing() {
-    http.get(SELF_URL + '/api/health', (res) => {
-      res.resume(); // drain response
-    }).on('error', (err) => {
-      // silently ignore — server might be offline during deploy
-    });
-  }
-
-  selfPing(); // initial warm-up
-  setInterval(selfPing, 10 * 60 * 1000); // every 10 minutes
-  console.log('Keep-alive enabled: pinging ' + SELF_URL + ' every 10 min');
 }
 
 main().catch((err) => {
