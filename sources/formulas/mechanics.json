@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "domain": "physics",
+  "topic": "mechanics",
+  "description": "Grundlegende Formeln der klassischen Mechanik für den Space-Builder.",
+  "lastUpdated": "2026-06-14",
+  "formulas": [
+    {
+      "id": "pendulum-period",
+      "name": "Pendelperiode (mathematisches Pendel)",
+      "formula": "T = 2π √(L / g)",
+      "variables": {
+        "T": "Periodendauer (s)",
+        "L": "Fadenlänge (m)",
+        "g": "Erdbeschleunigung (m/s²)"
+      },
+      "validWhen": "Kleine Auslenkung (θ < 15°), masseloser Faden, punktförmige Masse",
+      "exampleCalculation": "T = 2π √(1.0 m / 9.81 m/s²) ≈ 2.006 s",
+      "sourceIds": ["matter-js", "myphysicslab", "physicshub-github-io"]
+    },
+    {
+      "id": "pendulum-period-large",
+      "name": "Pendelperiode (große Auslenkung, elliptisches Integral)",
+      "formula": "T = 2π √(L/g) · [1 + (1/4)sin²(θ₀/2) + (9/64)sin⁴(θ₀/2) + …]",
+      "variables": {
+        "T": "Periodendauer (s)",
+        "L": "Fadenlänge (m)",
+        "g": "Erdbeschleunigung (m/s²)",
+        "θ₀": "maximale Auslenkung (rad)"
+      },
+      "validWhen": "Beliebige Auslenkung, erste Terme der Reihenentwicklung",
+      "sourceIds": ["myphysicslab"]
+    },
+    {
+      "id": "hookes-law",
+      "name": "Hookesches Gesetz (Feder)",
+      "formula": "F = -k · x",
+      "variables": {
+        "F": "Rückstellkraft (N)",
+        "k": "Federkonstante (N/m)",
+        "x": "Auslenkung aus Ruhelage (m)"
+      },
+      "validWhen": "Linear-elastischer Bereich der Feder",
+      "exampleCalculation": "F = -50 N/m · 0.1 m = -5 N",
+      "sourceIds": ["myphysicslab", "matter-js"]
+    },
+    {
+      "id": "spring-period",
+      "name": "Federpendel-Schwingungsdauer",
+      "formula": "T = 2π √(m / k)",
+      "variables": {
+        "T": "Schwingungsdauer (s)",
+        "m": "Masse (kg)",
+        "k": "Federkonstante (N/m)"
+      },
+      "validWhen": "Harmonische Schwingung, masse lose Feder, Reibung vernachlässigt",
+      "exampleCalculation": "T = 2π √(0.5 kg / 20 N/m) ≈ 0.993 s",
+      "sourceIds": ["myphysicslab"]
+    },
+    {
+      "id": "newton-second-law",
+      "name": "2. Newtonsches Axiom",
+      "formula": "F = m · a",
+      "variables": {
+        "F": "Kraft (N)",
+        "m": "Masse (kg)",
+        "a": "Beschleunigung (m/s²)"
+      },
+      "validWhen": "Konstante Masse, Inertialsystem",
+      "exampleCalculation": "F = 2 kg · 3 m/s² = 6 N",
+      "sourceIds": ["matter-js", "myphysicslab", "physicshub-github-io"]
+    },
+    {
+      "id": "kinetic-energy",
+      "name": "Kinetische Energie",
+      "formula": "E_kin = ½ · m · v²",
+      "variables": {
+        "E_kin": "kinetische Energie (J)",
+        "m": "Masse (kg)",
+        "v": "Geschwindigkeit (m/s)"
+      },
+      "validWhen": "Klassische Mechanik (v << c)",
+      "exampleCalculation": "E_kin = 0.5 · 2 kg · (3 m/s)² = 9 J",
+      "sourceIds": ["matter-js", "physicshub-github-io"]
+    },
+    {
+      "id": "potential-energy-gravity",
+      "name": "Potentielle Energie (Gravitation)",
+      "formula": "E_pot = m · g · h",
+      "variables": {
+        "E_pot": "potentielle Energie (J)",
+        "m": "Masse (kg)",
+        "g": "Erdbeschleunigung (m/s²)",
+        "h": "Höhe über Bezugspunkt (m)"
+      },
+      "validWhen": "Nähe Erdoberfläche, konstantes g",
+      "exampleCalculation": "E_pot = 2 kg · 9.81 m/s² · 5 m = 98.1 J",
+      "sourceIds": ["matter-js", "physicshub-github-io"]
+    },
+    {
+      "id": "projectile-range",
+      "name": "Wurfweite (waagerechter Wurf)",
+      "formula": "W = v₀ · √(2h / g)",
+      "variables": {
+        "W": "Wurfweite (m)",
+        "v₀": "Abwurfgeschwindigkeit (m/s)",
+        "h": "Abwurfhöhe (m)",
+        "g": "Erdbeschleunigung (m/s²)"
+      },
+      "validWhen": "Waagerechter Abwurf, Luftwiderstand vernachlässigt",
+      "exampleCalculation": "W = 5 m/s · √(2 · 10 m / 9.81 m/s²) ≈ 7.14 m",
+      "sourceIds": ["matter-js", "myphysicslab"]
+    },
+    {
+      "id": "projectile-range-angle",
+      "name": "Wurfweite (schräger Wurf, Bodenabwurf)",
+      "formula": "W = (v₀² · sin(2θ)) / g",
+      "variables": {
+        "W": "Wurfweite (m)",
+        "v₀": "Abwurfgeschwindigkeit (m/s)",
+        "θ": "Abwurfwinkel (rad)",
+        "g": "Erdbeschleunigung (m/s²)"
+      },
+      "validWhen": "Bodenabwurf und -landung, kein Luftwiderstand",
+      "exampleCalculation": "W = (10² · sin(60°)) / 9.81 ≈ 8.83 m",
+      "sourceIds": ["matter-js", "myphysicslab"]
+    },
+    {
+      "id": "momentum-conservation",
+      "name": "Impulserhaltung (1D, elastisch)",
+      "formula": "m₁·v₁ + m₂·v₂ = m₁·v₁' + m₂·v₂'",
+      "variables": {
+        "m₁": "Masse Körper 1 (kg)",
+        "v₁": "Geschwindigkeit Körper 1 vor Stoß (m/s)",
+        "v₁'": "Geschwindigkeit Körper 1 nach Stoß (m/s)",
+        "m₂": "Masse Körper 2 (kg)",
+        "v₂": "Geschwindigkeit Körper 2 vor Stoß (m/s)",
+        "v₂'": "Geschwindigkeit Körper 2 nach Stoß (m/s)"
+      },
+      "validWhen": "Elastischer Stoß, abgeschlossenes System",
+      "sourceIds": ["matter-js"]
+    },
+    {
+      "id": "gravitational-force",
+      "name": "Newtonsches Gravitationsgesetz",
+      "formula": "F = G · (m₁ · m₂) / r²",
+      "variables": {
+        "F": "Gravitationskraft (N)",
+        "G": "Gravitationskonstante (6.674·10⁻¹¹ N·m²/kg²)",
+        "m₁": "Masse Körper 1 (kg)",
+        "m₂": "Masse Körper 2 (kg)",
+        "r": "Abstand der Massenschwerpunkte (m)"
+      },
+      "validWhen": "Punktmassen oder homogene Kugeln",
+      "exampleCalculation": "F = 6.674e-11 · (10 · 10) / 1² ≈ 6.674e-9 N",
+      "sourceIds": ["matter-js"]
+    }
+  ]
+}

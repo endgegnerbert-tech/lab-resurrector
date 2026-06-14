@@ -1,0 +1,160 @@
+/**
+ * sketch.js — {{title}}
+ *
+ * Template: matter-basic
+ * Engine: matter-js
+ *
+ * Placeholders:
+ *   {{bodies}}     — physics body creation logic
+ *   {{update}}     — per-frame parameter update logic
+ *   {{render}}     — custom canvas rendering
+ *   {{measure}}    — measurement extraction logic
+ *   {{onParamChange}} — logic when a parameter changes
+ */
+
+(function () {
+  'use strict';
+
+  // ── State ────────────────────────────────────
+  const state = {
+    engine: null,
+    running: true,
+    time: 0,
+    params: {{paramsDefaults}},
+    // ── ADD: physics body references here ──────
+    // bodies: {},
+  };
+
+  // ── Config ────────────────────────────────────
+  const SCALE = 35; // px per meter (tweak as needed)
+
+  // ── DOM Refs ──────────────────────────────────
+  const canvas = document.getElementById('sim-canvas');
+  const ctx = canvas.getContext('2d');
+  const $dataRows = document.querySelectorAll('#data-panel .row .value');
+
+  // ── Canvas sizing ────────────────────────────
+  function resize() {
+    const rect = canvas.parentElement.getBoundingClientRect();
+    canvas.width = rect.width;
+    canvas.height = rect.height;
+  }
+  window.addEventListener('resize', resize);
+
+  // ── Init Simulation ──────────────────────────
+  function initSim() {
+    resize();
+
+    state.engine = Matter.Engine.create({
+      gravity: { x: 0, y: 1, scale: 0.001 }
+    });
+
+    // ── TODO: create physics bodies ────────────
+    // {{bodies}}
+
+    state.time = 0;
+  }
+
+  // ── Reset ────────────────────────────────────
+  function resetSim() {
+    Matter.Composite.clear(state.engine.world, false);
+    Matter.Engine.clear(state.engine);
+    initSim();
+  }
+
+  // ── Parameter ändern ─────────────────────────
+  function setParam(name, value) {
+    state.params[name] = value;
+
+    // ── TODO: apply parameter change to physics ─
+    // {{onParamChange}}
+
+    // ── TODO: per-frame update ──────────────────
+    // {{update}}
+
+    updateDisplay();
+  }
+
+  // ── Display aktualisieren ────────────────────
+  function updateDisplay() {
+    // ── TODO: update info label, param displays ─
+  }
+
+  // ── Measurements ─────────────────────────────
+  function collectMeasurements() {
+    // ── TODO: extract measurements from state ──
+    // {{measure}}
+    return {};
+  }
+
+  // ── Render Frame ─────────────────────────────
+  function frame() {
+    if (!state.engine) return;
+
+    // Physics step
+    if (state.running) {
+      Matter.Engine.update(state.engine, 1000 / 60);
+      state.time += 1 / 60;
+    }
+
+    // Canvas clear
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Background
+    ctx.fillStyle = '#0a0a14';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Grid
+    ctx.strokeStyle = '#1a1a2e';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < canvas.width; x += 40) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+    }
+    for (let y = 0; y < canvas.height; y += 40) {
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+    }
+
+    // ── TODO: custom rendering ─────────────────
+    // {{render}}
+
+    // Measurements → data panel
+    const measurements = collectMeasurements();
+    $dataRows.forEach(el => {
+      const id = el.id.replace('val-', '');
+      if (measurements[id] !== undefined) {
+        el.textContent = measurements[id];
+      }
+    });
+
+    requestAnimationFrame(frame);
+  }
+
+  // ── Event Binding ────────────────────────────
+  function bindControls() {
+    document.getElementById('btn-play').addEventListener('click', () => {
+      state.running = !state.running;
+      document.getElementById('btn-play').textContent = state.running ? '⏸' : '▶';
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', resetSim);
+
+    // ── Bind parameter sliders (added dynamically) ─
+    Object.keys(state.params).forEach(key => {
+      const slider = document.getElementById('sl-' + key);
+      if (slider) {
+        slider.addEventListener('input', () => {
+          const val = parseFloat(slider.value);
+          setParam(key, val);
+        });
+      }
+    });
+  }
+
+  // ── Start ────────────────────────────────────
+  resize();
+  initSim();
+  updateDisplay();
+  bindControls();
+  frame();
+
+})();

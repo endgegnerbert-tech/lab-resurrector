@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "domain": "physics",
+  "topic": "waves",
+  "description": "Grundlegende Formeln der Wellenlehre für den Space-Builder.",
+  "lastUpdated": "2026-06-14",
+  "formulas": [
+    {
+      "id": "wave-speed",
+      "name": "Wellengeschwindigkeit",
+      "formula": "c = λ · f",
+      "variables": {
+        "c": "Ausbreitungsgeschwindigkeit (m/s)",
+        "λ": "Wellenlänge (m)",
+        "f": "Frequenz (Hz)"
+      },
+      "validWhen": "Alle Wellentypen (mechanisch, elektromagnetisch)",
+      "exampleCalculation": "c = 0.5 m · 440 Hz = 220 m/s",
+      "sourceIds": ["p5.js", "physicshub-github-io"]
+    },
+    {
+      "id": "wave-number",
+      "name": "Wellenzahl und Kreisfrequenz",
+      "formula": "k = 2π / λ,   ω = 2π · f",
+      "variables": {
+        "k": "Wellenzahl (rad/m)",
+        "λ": "Wellenlänge (m)",
+        "ω": "Kreisfrequenz (rad/s)",
+        "f": "Frequenz (Hz)"
+      },
+      "validWhen": "Harmonische Wellen",
+      "sourceIds": ["p5.js", "physicshub-github-io"]
+    },
+    {
+      "id": "harmonic-wave",
+      "name": "Harmonische Welle (1D, +x-Richtung)",
+      "formula": "y(x, t) = A · sin(kx - ωt + φ)",
+      "variables": {
+        "y": "Auslenkung (m)",
+        "A": "Amplitude (m)",
+        "k": "Wellenzahl (rad/m)",
+        "x": "Position (m)",
+        "ω": "Kreisfrequenz (rad/s)",
+        "t": "Zeit (s)",
+        "φ": "Phasenverschiebung (rad)"
+      },
+      "validWhen": "Harmonische Welle, dispersionsfreies Medium",
+      "exampleCalculation": "y(0.5, 1.0) = 0.1 · sin(2π/1 · 0.5 - 2π·2 · 1.0)",
+      "sourceIds": ["p5.js", "physicshub-github-io"]
+    },
+    {
+      "id": "standing-wave",
+      "name": "Stehende Welle (1D, feste Enden)",
+      "formula": "y(x, t) = 2A · sin(kx) · cos(ωt)",
+      "variables": {
+        "y": "Auslenkung (m)",
+        "A": "Amplitude der Einzelwelle (m)",
+        "k": "Wellenzahl (rad/m)",
+        "x": "Position (m)",
+        "ω": "Kreisfrequenz (rad/s)",
+        "t": "Zeit (s)"
+      },
+      "validWhen": "Zwei gegenläufige Wellen gleicher Amplitude/Frequenz, feste Enden",
+      "sourceIds": ["p5.js"]
+    },
+    {
+      "id": "standing-wave-resonance",
+      "name": "Eigenfrequenzen (stehende Welle, beidseitig fest)",
+      "formula": "f_n = n · c / (2L),   n = 1,2,3,…",
+      "variables": {
+        "f_n": "n-te Eigenfrequenz (Hz)",
+        "n": "Modenzahl (1 = Grundschwingung)",
+        "c": "Wellengeschwindigkeit (m/s)",
+        "L": "Länge des Mediums (m)"
+      },
+      "validWhen": "Beidseitig fest eingespanntes Medium (Saite)",
+      "exampleCalculation": "f_1 = 1 · 340 m/s / (2 · 0.65 m) ≈ 261.5 Hz (mittleres C)",
+      "sourceIds": ["p5.js"]
+    },
+    {
+      "id": "doppler-effect",
+      "name": "Doppler-Effekt (Schall, Quelle bewegt)",
+      "formula": "f' = f · c / (c - v_q)",
+      "variables": {
+        "f'": "Wahrgenommene Frequenz (Hz)",
+        "f": "Ausgesendete Frequenz (Hz)",
+        "c": "Schallgeschwindigkeit (m/s)",
+        "v_q": "Geschwindigkeit der Quelle (m/s)"
+      },
+      "validWhen": "Quelle bewegt sich auf Beobachter zu, v_q < c",
+      "sourceIds": ["physicshub-github-io"]
+    },
+    {
+      "id": "superposition",
+      "name": "Superpositionsprinzip (Interferenz)",
+      "formula": "y_ges(x,t) = y₁(x,t) + y₂(x,t)",
+      "variables": {
+        "y_ges": "Gesamtauslenkung (m)",
+        "y₁": "Auslenkung Welle 1 (m)",
+        "y₂": "Auslenkung Welle 2 (m)"
+      },
+      "validWhen": "Lineare Wellen (kleine Amplituden)",
+      "sourceIds": ["p5.js", "physicshub-github-io"]
+    },
+    {
+      "id": "double-slit",
+      "name": "Doppelspalt (Maxima)",
+      "formula": "sin(θ) = n · λ / d,   n = 0, ±1, ±2, …",
+      "variables": {
+        "θ": "Winkel zum Maximum (°/rad)",
+        "n": "Ordnung des Maximums",
+        "λ": "Wellenlänge (m)",
+        "d": "Spaltabstand (m)"
+      },
+      "validWhen": "Kohärentes Licht, d >> λ, kleine Winkel",
+      "exampleCalculation": "sin(θ) = 2 · 500e-9 m / 0.001 m → θ ≈ 0.057°",
+      "sourceIds": ["p5.js"]
+    },
+    {
+      "id": "wave-energy",
+      "name": "Energie einer Welle (transversal, Saite)",
+      "formula": "E = ½ · μ · ω² · A² · λ",
+      "variables": {
+        "E": "Energie pro Wellenlänge (J)",
+        "μ": "Masse pro Länge (kg/m)",
+        "ω": "Kreisfrequenz (rad/s)",
+        "A": "Amplitude (m)",
+        "λ": "Wellenlänge (m)"
+      },
+      "validWhen": "Harmonische Transversalwelle auf einer Saite",
+      "sourceIds": []
+    },
+    {
+      "id": "string-wave-speed",
+      "name": "Wellengeschwindigkeit auf einer Saite",
+      "formula": "c = √(F / μ)",
+      "variables": {
+        "c": "Wellengeschwindigkeit (m/s)",
+        "F": "Spannkraft (N)",
+        "μ": "Masse pro Länge (kg/m)"
+      },
+      "validWhen": "Ideale Saite, keine Steifigkeit",
+      "exampleCalculation": "c = √(100 N / 0.01 kg/m) = 100 m/s",
+      "sourceIds": ["p5.js"]
+    }
+  ]
+}

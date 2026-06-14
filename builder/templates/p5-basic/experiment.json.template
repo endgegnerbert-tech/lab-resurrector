@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "{{id}}",
+  "title": "{{title}}",
+  "domain": "physics",
+  "engine": "p5.js",
+  "level": "school",
+  "concepts": {{concepts}},
+  "parameters": {{parameters}},
+  "measurements": {{measurements}},
+  "formulas": {{formulas}}
+}

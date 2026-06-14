@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{title}} — LabResurrector Space</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a14;
+      color: #ccc;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: #12121e;
+      border-bottom: 1px solid #2a2a3e;
+    }
+    header h1 { font-size: 16px; color: #8b8bf0; }
+    header .subtitle { font-size: 12px; color: #666; }
+    #sim-section {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    #controls {
+      position: absolute;
+      bottom: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      background: rgba(18,18,30,0.85);
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid #2a2a3e;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    #controls button {
+      background: #2a2a4e;
+      border: 1px solid #3a3a5e;
+      color: #ccc;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    #controls button:hover { background: #3a3a6e; }
+    .param-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .param-group label { color: #888; min-width: 30px; }
+    .param-group input[type="range"] {
+      width: 80px;
+      accent-color: #6c63ff;
+    }
+    .param-group .value { color: #8b8bf0; min-width: 36px; text-align: right; font-family: monospace; }
+    #data-panel {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      background: rgba(18,18,30,0.8);
+      border: 1px solid #2a2a3e;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12px;
+      font-family: monospace;
+      min-width: 140px;
+      pointer-events: none;
+    }
+    #data-panel .row { display: flex; justify-content: space-between; gap: 12px; }
+    #data-panel .label { color: #666; }
+    #data-panel .value { color: #8b8bf0; }
+    #info {
+      position: absolute;
+      top: 12px;
+      left: 16px;
+      font-size: 11px;
+      font-family: monospace;
+      color: rgba(136,136,170,0.5);
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧪 {{title}}</h1>
+    <span class="subtitle">matter-js Space</span>
+  </header>
+  <section id="sim-section">
+    <canvas id="sim-canvas"></canvas>
+    <div id="info">{{infoLabel}}</div>
+    <div id="data-panel">
+      {{#measurements}}
+      <div class="row"><span class="label">{{label}}</span><span class="value" id="val-{{id}}">—</span></div>
+      {{/measurements}}
+    </div>
+    <div id="controls">
+      <button id="btn-play">⏸</button>
+      <button id="btn-reset">🔄</button>
+      {{#parameters}}
+      <div class="param-group">
+        <label>{{label}}</label>
+        <input type="range" id="sl-{{key}}" min="{{min}}" max="{{max}}" step="{{step}}" value="{{default}}">
+        <span class="value" id="disp-{{key}}">{{default}}{{unit}}</span>
+      </div>
+      {{/parameters}}
+    </div>
+  </section>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
+  <script src="sketch.js"></script>
+</body>
+</html>

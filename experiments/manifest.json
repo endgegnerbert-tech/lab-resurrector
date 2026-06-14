@@ -7,6 +7,14 @@
       "domain": "physics",
       "concepts": ["Pendel", "Periodendauer", "Gravitation", "Harmonische Schwingung"],
       "createdAt": "2026-06-14T00:00:00Z"
+    },
+    {
+      "id": "pendulum-period",
+      "title": "Pendelperiode untersuchen",
+      "path": "/experiments/spaces/pendulum-period/",
+      "domain": "physics",
+      "concepts": ["Pendel", "Periodendauer", "Gravitation"],
+      "createdAt": "2026-06-14T12:00:00Z"
     }
   ]
 }

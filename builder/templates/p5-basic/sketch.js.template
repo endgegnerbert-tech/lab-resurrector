@@ -1,0 +1,133 @@
+/**
+ * sketch.js — {{title}}
+ *
+ * Template: p5-basic
+ * Engine: p5.js
+ *
+ * Placeholders:
+ *   {{setup}}        — initialisation logic (bodies, vectors, etc.)
+ *   {{draw}}         — per-frame simulation and rendering
+ *   {{onParamChange}} — logic when a parameter changes
+ *   {{measure}}      — measurement extraction
+ *   {{formulaVars}}  — formula computation variables
+ */
+
+(function () {
+  'use strict';
+
+  // ── State ────────────────────────────────────
+  const state = {
+    running: true,
+    time: 0,
+    params: {{paramsDefaults}},
+    // ── ADD: simulation state variables here ───
+    // e.g. angle, velocity, position, etc.
+  };
+
+  // ── DOM Refs (external to p5 canvas) ─────────
+  const $info = document.getElementById('info');
+  const $dataRows = document.querySelectorAll('#data-panel .row .value');
+
+  // ── Parameter ändern ─────────────────────────
+  function setParam(name, value) {
+    state.params[name] = value;
+
+    // ── TODO: apply parameter change to sim state ─
+    // {{onParamChange}}
+
+    updateDisplay();
+  }
+
+  // ── Display aktualisieren ────────────────────
+  function updateDisplay() {
+    const p = state.params;
+    // ── TODO: update info label ─────────────────
+    // $info.textContent = `...`;
+  }
+
+  // ── Measurements ─────────────────────────────
+  function collectMeasurements() {
+    // ── TODO: extract measurements from state ──
+    // {{measure}}
+    return {};
+  }
+
+  // ── p5 Sketch ────────────────────────────────
+  function sketch(p) {
+
+    p.setup = function () {
+      const container = document.getElementById('p5-container');
+      const rect = container.getBoundingClientRect();
+      const canvas = p.createCanvas(rect.width || 600, rect.height || 400);
+      canvas.parent('p5-container');
+
+      // ── TODO: initialise simulation ──────────
+      // {{setup}}
+    };
+
+    p.draw = function () {
+      p.background(10, 10, 20);
+
+      // Grid
+      p.stroke(26, 26, 46);
+      p.strokeWeight(1);
+      for (let x = 0; x < p.width; x += 40) {
+        p.line(x, 0, x, p.height);
+      }
+      for (let y = 0; y < p.height; y += 40) {
+        p.line(0, y, p.width, y);
+      }
+
+      if (state.running) {
+        state.time += 1 / 60;
+      }
+
+      // ── TODO: simulation step + rendering ────
+      // {{draw}}
+
+      // Update data panel
+      const measurements = collectMeasurements();
+      $dataRows.forEach(el => {
+        const id = el.id.replace('val-', '');
+        if (measurements[id] !== undefined) {
+          el.textContent = measurements[id];
+        }
+      });
+    };
+
+    p.windowResized = function () {
+      const container = document.getElementById('p5-container');
+      const rect = container.getBoundingClientRect();
+      p.resizeCanvas(rect.width || 600, rect.height || 400);
+    };
+  }
+
+  // ── Event Binding ────────────────────────────
+  function bindControls() {
+    document.getElementById('btn-play').addEventListener('click', () => {
+      state.running = !state.running;
+      document.getElementById('btn-play').textContent = state.running ? '⏸' : '▶';
+    });
+
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      state.time = 0;
+      // ── TODO: reset simulation state ─────────
+    });
+
+    Object.keys(state.params).forEach(key => {
+      const slider = document.getElementById('sl-' + key);
+      if (slider) {
+        slider.addEventListener('input', () => {
+          const val = parseFloat(slider.value);
+          setParam(key, val);
+        });
+      }
+    });
+  }
+
+  // ── Start ────────────────────────────────────
+  new p5(sketch);
+  updateDisplay();
+  bindControls();
+
+})();
