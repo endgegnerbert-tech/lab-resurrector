@@ -154,11 +154,11 @@ Zero external frontend dependencies. No React, no Vue, no jQuery. No CDN scripts
 
 ## Supported Providers
 
-| Provider | Format | Notes |
+| Provider | Format | Models |
 |----------|--------|-------|
 | OpenAI | OpenAI | GPT-4o, GPT-4o mini, o3, o4-mini |
 | Anthropic | Anthropic | Claude Sonnet 4, Haiku 3.5, Opus 4 |
-| DeepSeek | OpenAI | V4 Flash ($0.14/$0.28 per 1M tok) |
+| DeepSeek | OpenAI | V4 Flash ($0.14/$0.28 per 1M tok), V4 Pro |
 | Groq | OpenAI | Llama, Mixtral (free tier available) |
 | Google | Google | Gemini 2.0 Flash, Pro |
 | Together AI | OpenAI | Open-source models |
@@ -184,6 +184,8 @@ Full provider/model catalog at [`sources/pi-model-catalog.json`](sources/pi-mode
 | GPT-4o mini | $0.15 | $0.60 | Balanced quality/price |
 | Claude Haiku 3.5 | $1.00 | $5.00 | Reliability |
 | DeepSeek V4 Pro | $0.32 | $0.64 | Higher quality reasoning |
+
+*Developed and tested with DeepSeek V4 Flash — the cheapest model with reliable tool calling.* Every user can choose their own price/quality balance.
 
 *Developed and tested with DeepSeek V4 Flash — the cheapest model with reliable tool calling.* Every user can choose their own price/quality balance.
 
