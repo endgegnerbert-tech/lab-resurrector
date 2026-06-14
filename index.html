@@ -12,11 +12,23 @@
     <header id="topbar">
       <h1>🧪 LabResurrector</h1>
       <span class="subtitle">AI-gestütztes Physiklabor</span>
-      <div class="experiment-selector">
-        <label for="sim-select">Experiment:</label>
+      <!-- Legacy Quick-Sims (Pendel/Wurf) -->
+      <div class="experiment-selector legacy-selector">
+        <label for="sim-select">⚡ Quick-Sim:</label>
         <select id="sim-select">
           <option value="pendulum">Pendel</option>
           <option value="projectile">Schiefer Wurf</option>
+        </select>
+      </div>
+
+      <!-- Separator -->
+      <span class="selector-divider"></span>
+
+      <!-- Space Selector (aus experiments/manifest.json) -->
+      <div class="experiment-selector space-selector">
+        <label for="space-select">📁 Space:</label>
+        <select id="space-select">
+          <option value="">— Spaces laden…</option>
         </select>
       </div>
       <div class="phase-indicator" id="phase-indicator">
@@ -28,19 +40,63 @@
 
     <!-- Main Content -->
     <main id="main">
-      <!-- Simulation Canvas -->
-      <section id="sim-section">
-        <canvas id="sim-canvas"></canvas>
-        <div id="sim-overlay">
-          <div id="sim-controls">
-            <button id="btn-play" title="Play/Pause">⏸</button>
-            <button id="btn-reset" title="Reset">🔄</button>
+      <!-- Left Panel: Simulation + Data/Formula -->
+      <div id="left-panel">
+        <!-- Simulation Canvas -->
+        <section id="sim-section">
+          <canvas id="sim-canvas"></canvas>
+          <div id="sim-overlay">
+            <div id="sim-controls">
+              <button id="btn-play" title="Play/Pause">⏸</button>
+              <button id="btn-reset" title="Reset">🔄</button>
+            </div>
+            <div id="param-panel">
+              <!-- Dynamisch befüllt -->
+            </div>
           </div>
-          <div id="param-panel">
-            <!-- Dynamisch befüllt -->
-          </div>
+        </section>
+
+        <!-- Bottom Panels: Data & Formula -->
+        <div id="bottom-panels">
+          <section id="data-panel">
+            <div class="panel-header">
+              <span>📊 Daten & Messwerte</span>
+              <span class="panel-badge">live</span>
+            </div>
+            <div class="panel-body">
+              <div id="live-values">
+                <div class="value-row"><span class="value-label">Zeit:</span><span class="value-number">0.00 s</span></div>
+                <div class="value-row"><span class="value-label">Position x:</span><span class="value-number">0.00 m</span></div>
+                <div class="value-row"><span class="value-label">Geschwindigkeit:</span><span class="value-number">0.00 m/s</span></div>
+                <div class="value-row"><span class="value-label">Energie:</span><span class="value-number">0.00 J</span></div>
+              </div>
+              <div class="panel-placeholder">
+                <span class="placeholder-hint">Messwerte erscheinen während der Simulation</span>
+              </div>
+            </div>
+          </section>
+          <section id="formula-panel">
+            <div class="panel-header">
+              <span>📐 Formel & Rechnung</span>
+              <span class="panel-badge">Modell</span>
+            </div>
+            <div class="panel-body">
+              <div class="formula-display">
+                <div class="formula-box">T = 2π √(L / g)</div>
+                <div class="formula-vars">
+                  <div class="var-row"><span class="var-name">T</span><span class="var-desc">Periodendauer</span></div>
+                  <div class="var-row"><span class="var-name">L</span><span class="var-desc">Pendellänge</span></div>
+                  <div class="var-row"><span class="var-name">g</span><span class="var-desc">Erdbeschleunigung</span></div>
+                </div>
+              </div>
+              <div class="computed-result">
+                <span class="result-label">Erwartet:</span>
+                <span class="result-value">—</span>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
 
       <!-- Chat Panel -->
       <section id="chat-section">
@@ -68,6 +124,7 @@
   <script src="js/sim/projectile.js"></script>
   <script src="js/ws/client.js"></script>
   <script src="js/chat/panel.js"></script>
+  <script src="js/experiment/api.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

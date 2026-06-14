@@ -101,6 +101,53 @@
       PiClient.updateSimState(params);
     });
 
+    // ── Space Selector (aus experiments/manifest.json) ──
+    const spaceSelect = document.getElementById('space-select');
+
+    function loadSpaces() {
+      fetch('/api/spaces')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.spaces || data.spaces.length === 0) {
+            spaceSelect.innerHTML = '<option value="">— Keine Spaces —</option>';
+            return;
+          }
+          spaceSelect.innerHTML = '<option value="">— Space wählen —</option>';
+          data.spaces.forEach(sp => {
+            const opt = document.createElement('option');
+            opt.value = sp.id;
+            opt.textContent = sp.title;
+            spaceSelect.appendChild(opt);
+          });
+        })
+        .catch(() => {
+          spaceSelect.innerHTML = '<option value="">— Server nicht erreichbar —</option>';
+        });
+    }
+
+    spaceSelect.addEventListener('change', (e) => {
+      const id = e.target.value;
+      if (!id) return;
+
+      // Space aus Manifest ermitteln
+      fetch('/api/spaces')
+        .then(r => r.json())
+        .then(data => {
+          const sp = (data.spaces || []).find(s => s.id === id);
+          if (!sp) return;
+
+          ChatPanel.addSystemMessage(
+            `📁 Space „${sp.title}” ausgewählt (${sp.domain}) — wird geladen…`
+          );
+          // TODO Phase 5+ : Space in iframe oder direkt laden
+          // Vorbereitet: spaceId steht in sp.id, Pfad in sp.path
+          console.log('[Space] Selected:', sp);
+        })
+        .catch(() => {});
+    });
+
+    loadSpaces();
+
     // ── Keyboard ─────────────────────────────────
     document.addEventListener('keydown', (e) => {
       if (e.key === ' ' && e.target.tagName !== 'TEXTAREA') {
