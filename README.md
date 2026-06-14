@@ -210,3 +210,19 @@ git push origin main
 ```
 
 Live at: https://lab-resurrector.onrender.com
+
+> ⚠️ **Render free tier** spins down after ~15 min of inactivity. The first load after sleep takes 30-60s (cold start).
+
+### 🛌 Prevent cold starts (2 min, free)
+
+Use [cron-job.org](https://cron-job.org) — free, no credit card:
+
+1. Sign up at [cron-job.org](https://cron-job.org)
+2. **New Cron Job:**
+   - URL: `https://lab-resurrector.onrender.com/api/health`
+   - Interval: **every 5 minutes**
+   - Save
+
+Done. Your service stays awake permanently.
+
+Alternative: [UptimeRobot](https://uptimerobot.com) (free, 50 monitors, 5 min interval).
