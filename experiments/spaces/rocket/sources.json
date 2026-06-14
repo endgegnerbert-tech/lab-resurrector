@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Water Rocket Physics — Real World Physics Problems",
+    "url": "https://www.real-world-physics-problems.com/water-rocket-physics.html",
+    "license": "fair-use",
+    "usage": "Formula",
+    "description": "Thrust equation, mass flow, exhaust velocity for water rockets"
+  },
+  {
+    "name": "Projectile Motion — OpenStax Physics",
+    "url": "https://openstax.org/books/physics/pages/5-3-projectile-motion",
+    "license": "CC-BY-4.0",
+    "usage": "Formula",
+    "description": "Range and height formulas: R = v²·sin(2θ)/g, H = v²·sin²(θ)/(2g)"
+  },
+  {
+    "name": "Tsiolkovsky Rocket Equation — NASA GRC",
+    "url": "https://www.grc.nasa.gov/www/k-12/airplane/rocket.html",
+    "license": "public-domain",
+    "usage": "Formula",
+    "description": "Delta-v = v_exhaust · ln(m₀/m_f). Used for final velocity prediction."
+  },
+  {
+    "name": "PhET Projectile Motion",
+    "url": "https://phet.colorado.edu/en/simulations/projectile-motion",
+    "license": "GPL-3.0",
+    "usage": "Inspiration",
+    "description": "Gold standard for didactic projectile simulations."
+  }
+]

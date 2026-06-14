@@ -1,0 +1,16 @@
+[
+  {
+    "name": "PhET Interactive Simulations – Wave Interference",
+    "url": "https://phet.colorado.edu/en/simulations/wave-interference",
+    "license": "GPL-3.0",
+    "version": "2026",
+    "usage": "Inspiration: didaktisches Design"
+  },
+  {
+    "name": "Open Source Physics – Superposition Principle",
+    "url": "https://github.com/OpenSourcePhysics/osp-core",
+    "license": "GPL-3.0",
+    "version": "2025",
+    "usage": "Formula reference"
+  }
+]

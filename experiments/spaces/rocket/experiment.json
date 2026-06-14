@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 1,
+  "id": "rocket",
+  "title": "Water Rocket",
+  "domain": "physics",
+  "engine": "canvas-2d",
+  "level": "school",
+  "concepts": [
+    "Projectile motion",
+    "Thrust",
+    "Pressure",
+    "Momentum conservation",
+    "Tsiolkovsky rocket equation",
+    "Optimization"
+  ],
+  "parameters": {
+    "pressure": {
+      "label": "Pressure",
+      "min": 1,
+      "max": 6,
+      "step": 0.5,
+      "default": 3,
+      "unit": "bar",
+      "meaning": "Air pressure in tank. Determines exhaust velocity and thrust."
+    },
+    "waterRatio": {
+      "label": "Water fill",
+      "min": 0.1,
+      "max": 0.8,
+      "step": 0.05,
+      "default": 0.3,
+      "unit": "% of tank",
+      "meaning": "How much of the tank volume is filled with water."
+    },
+    "angle": {
+      "label": "Launch angle",
+      "min": 10,
+      "max": 80,
+      "step": 1,
+      "default": 45,
+      "unit": "°",
+      "meaning": "Launch angle relative to horizontal."
+    }
+  },
+  "measurements": [
+    {
+      "id": "time",
+      "label": "Flight time",
+      "unit": "s"
+    },
+    {
+      "id": "height",
+      "label": "Max height",
+      "unit": "m"
+    },
+    {
+      "id": "range",
+      "label": "Range",
+      "unit": "m"
+    },
+    {
+      "id": "velocity",
+      "label": "Current speed",
+      "unit": "m/s"
+    }
+  ],
+  "formulas": [
+    {
+      "id": "water-rocket-delta-v",
+      "name": "Tsiolkovsky rocket equation",
+      "formula": "Δv = v_exhaust · ln(m₀ / m_dry)",
+      "variables": {
+        "v_exhaust": "√(2·P/ρ) — exhaust velocity (m/s)",
+        "m₀": "initial mass (dry + water) (kg)",
+        "m_dry": "dry mass of bottle (kg)",
+        "P": "tank pressure (Pa)",
+        "ρ": "water density (kg/m³)"
+      },
+      "validWhen": "No drag, no gravity losses during burn",
+      "exampleCalculation": "Δv = 24.5 · ln(0.39/0.15) ≈ 23.8 m/s at 3 bar, 30% water"
+    },
+    {
+      "id": "projectile-range",
+      "name": "Range (projectile motion)",
+      "formula": "R = v₀²·sin(2θ)/g",
+      "variables": {
+        "v₀": "Launch velocity (m/s)",
+        "θ": "Launch angle (°)",
+        "g": "9.81 m/s²"
+      },
+      "validWhen": "No air resistance, flat ground"
+    },
+    {
+      "id": "projectile-height",
+      "name": "Max height (projectile motion)",
+      "formula": "H = v₀²·sin²(θ)/(2g)",
+      "variables": {
+        "v₀": "Launch velocity (m/s)",
+        "θ": "Launch angle (°)",
+        "g": "9.81 m/s²"
+      },
+      "validWhen": "No air resistance"
+    },
+    {
+      "id": "water-rocket-thrust",
+      "name": "Water rocket thrust",
+      "formula": "F = ṁ · v_exhaust = ρ·A·v_exhaust²",
+      "variables": {
+        "ṁ": "mass flow rate (kg/s)",
+        "v_exhaust": "√(2·P/ρ) (m/s)",
+        "A": "nozzle cross-section (m²)",
+        "ρ": "water density (kg/m³)"
+      },
+      "validWhen": "Water is incompressible, ideal nozzle"
+    }
+  ]
+}

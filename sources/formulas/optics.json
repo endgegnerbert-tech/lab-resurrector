@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "domain": "physics",
+  "topic": "optics",
+  "description": "Grundlegende Formeln der geometrischen Optik für spätere Spaces.",
+  "lastUpdated": "2026-06-14",
+  "formulas": [
+    {
+      "id": "reflection-law",
+      "name": "Reflexionsgesetz",
+      "formula": "α = β",
+      "variables": {
+        "α": "Einfallswinkel",
+        "β": "Ausfallswinkel"
+      },
+      "validWhen": "Idealer Spiegel, Winkel gegen das Lot gemessen",
+      "sourceIds": ["p5.js", "physicshub-github-io"]
+    },
+    {
+      "id": "snells-law",
+      "name": "Snelliussches Brechungsgesetz",
+      "formula": "n₁ · sin(α) = n₂ · sin(β)",
+      "variables": {
+        "n₁": "Brechungsindex Medium 1",
+        "n₂": "Brechungsindex Medium 2",
+        "α": "Einfallswinkel",
+        "β": "Brechungswinkel"
+      },
+      "validWhen": "Übergang zwischen homogenen Medien",
+      "sourceIds": ["p5.js", "physicshub-github-io"]
+    },
+    {
+      "id": "thin-lens",
+      "name": "Dünne-Linsen-Gleichung",
+      "formula": "1/f = 1/g + 1/b",
+      "variables": {
+        "f": "Brennweite",
+        "g": "Gegenstandsweite",
+        "b": "Bildweite"
+      },
+      "validWhen": "Dünne Linse, paraxiale Strahlen",
+      "sourceIds": ["physicshub-github-io"]
+    }
+  ]
+}

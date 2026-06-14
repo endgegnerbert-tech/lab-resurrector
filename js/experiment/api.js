@@ -1,74 +1,74 @@
 /**
- * experiment/api.js — Measurement API
- *
- * Stellt window.ExperimentAPI für Spaces und Console bereit.
- * Ermöglicht emitMeasurement(data) → aktualisiert Datenpanel.
- *
- * Usage:
- *   window.ExperimentAPI.emitMeasurement({ t: 4.2, velocity: 3.1, energy: 4.8 });
- *
- * Events:
- *   'experiment:measurement' — wird auf document gefeuert mit detail.data
+ * experiment/api.js — Measurement API (flabs)
  */
 
 (function () {
   'use strict';
 
-  // ── Bekannte Labels & Einheiten ──────────────
   const KNOWN = {
-    t:              { label: 'Zeit',              unit: 's' },
-    period:         { label: 'Periodendauer',      unit: 's' },
-    velocity:       { label: 'Geschwindigkeit',    unit: 'm/s' },
-    speed:          { label: 'Geschwindigkeit',    unit: 'm/s' },
-    v:              { label: 'Geschwindigkeit',    unit: 'm/s' },
-    energy:         { label: 'Energie',            unit: 'J' },
-    x:              { label: 'Position x',         unit: 'm' },
-    y:              { label: 'Position y',         unit: 'm' },
-    position:       { label: 'Position',           unit: 'm' },
-    angle:          { label: 'Winkel',             unit: '°' },
-    acceleration:   { label: 'Beschleunigung',     unit: 'm/s²' },
-    a:              { label: 'Beschleunigung',     unit: 'm/s²' },
-    frequency:      { label: 'Frequenz',           unit: 'Hz' },
-    f:              { label: 'Frequenz',           unit: 'Hz' },
-    wavelength:     { label: 'Wellenlänge',        unit: 'm' },
-    lambda:         { label: 'Wellenlänge',        unit: 'm' },
-    amplitude:      { label: 'Amplitude',          unit: 'm' },
-    momentum:       { label: 'Impuls',             unit: 'kg·m/s' },
-    p:              { label: 'Impuls',             unit: 'kg·m/s' },
-    range:          { label: 'Reichweite',         unit: 'm' },
-    mass:           { label: 'Masse',              unit: 'kg' },
-    length:         { label: 'Länge',              unit: 'm' },
-    L:              { label: 'Länge',              unit: 'm' },
-    gravity:        { label: 'Gravitation',        unit: 'm/s²' },
-    g:              { label: 'Gravitation',        unit: 'm/s²' },
-    voltage:        { label: 'Spannung',           unit: 'V' },
-    U:              { label: 'Spannung',           unit: 'V' },
-    current:        { label: 'Stromstärke',        unit: 'A' },
-    I:              { label: 'Stromstärke',        unit: 'A' },
-    resistance:     { label: 'Widerstand',         unit: 'Ω' },
-    R:              { label: 'Widerstand',         unit: 'Ω' },
-    charge:         { label: 'Ladung',             unit: 'C' },
-    Q:              { label: 'Ladung',             unit: 'C' },
-    power:          { label: 'Leistung',           unit: 'W' },
-    P:              { label: 'Leistung',           unit: 'W' },
-    angle_in:       { label: 'Einfallswinkel',     unit: '°' },
-    angle_out:      { label: 'Ausfallswinkel',     unit: '°' },
-    focal_length:   { label: 'Brennweite',         unit: 'm' },
-    intensity:      { label: 'Intensität',         unit: 'W/m²' },
+    t:              { label: 'Time',              unit: 's' },
+    period:         { label: 'Period',            unit: 's' },
+    T:              { label: 'Period',            unit: 's' },
+    velocity:       { label: 'Velocity',          unit: 'm/s' },
+    speed:          { label: 'Speed',             unit: 'm/s' },
+    v:              { label: 'Velocity',          unit: 'm/s' },
+    energy:         { label: 'Energy',            unit: 'J' },
+    E:              { label: 'Energy',            unit: 'J' },
+    x:              { label: 'Position x',        unit: 'm' },
+    y:              { label: 'Position y',        unit: 'm' },
+    position:       { label: 'Position',          unit: 'm' },
+    angle:          { label: 'Angle',             unit: '°' },
+    acceleration:   { label: 'Acceleration',      unit: 'm/s²' },
+    a:              { label: 'Acceleration',      unit: 'm/s²' },
+    frequency:      { label: 'Frequency',         unit: 'Hz' },
+    f:              { label: 'Frequency',         unit: 'Hz' },
+    wavelength:     { label: 'Wavelength',        unit: 'm' },
+    lambda:         { label: 'Wavelength',        unit: 'm' },
+    amplitude:      { label: 'Amplitude',         unit: 'm' },
+    momentum:       { label: 'Momentum',          unit: 'kg·m/s' },
+    p:              { label: 'Momentum',          unit: 'kg·m/s' },
+    range:          { label: 'Range',             unit: 'm' },
+    mass:           { label: 'Mass',              unit: 'kg' },
+    m:              { label: 'Mass',              unit: 'kg' },
+    length:         { label: 'Length',            unit: 'm' },
+    L:              { label: 'Length',            unit: 'm' },
+    gravity:        { label: 'Gravity',           unit: 'm/s²' },
+    g:              { label: 'Gravity',           unit: 'm/s²' },
+    voltage:        { label: 'Voltage',           unit: 'V' },
+    U:              { label: 'Voltage',           unit: 'V' },
+    current:        { label: 'Current',           unit: 'A' },
+    I:              { label: 'Current',           unit: 'A' },
+    resistance:     { label: 'Resistance',        unit: 'Ω' },
+    R:              { label: 'Resistance',        unit: 'Ω' },
+    charge:         { label: 'Charge',            unit: 'C' },
+    Q:              { label: 'Charge',            unit: 'C' },
+    power:          { label: 'Power',             unit: 'W' },
+    P:              { label: 'Power',             unit: 'W' },
+    angle_in:       { label: 'Incidence angle',   unit: '°' },
+    angle_out:      { label: 'Refraction angle',  unit: '°' },
+    focal_length:   { label: 'Focal length',      unit: 'm' },
+    intensity:      { label: 'Intensity',         unit: 'W/m²' },
+    height:         { label: 'Height',            unit: 'm' },
+    maxHeight:      { label: 'Max height',        unit: 'm' },
+    time:           { label: 'Time',              unit: 's' },
+    pressure:       { label: 'Pressure',          unit: 'bar' },
+    thrust:         { label: 'Thrust',            unit: 'N' },
+    drag:           { label: 'Drag',              unit: 'N' },
   };
 
   const HISTORY_MAX = 200;
 
-  // ── Privater Zustand ─────────────────────────
   let history = [];
   let latest = {};
   let liveValuesEl = null;
   let initialized = false;
+  let configuredMeasurements = [];
+  let rowMap = new Map();
 
-  // ── Formatierung ─────────────────────────────
   function formatValue(val) {
+    if (val === undefined || val === null || val === '') return '—';
     if (typeof val === 'number') {
-      if (Math.abs(val) < 0.01) return val.toExponential(3);
+      if (Math.abs(val) < 0.01 && val !== 0) return val.toExponential(3);
       if (Math.abs(val) < 1) return val.toFixed(4);
       if (Number.isInteger(val)) return val.toString();
       return val.toFixed(2);
@@ -76,137 +76,162 @@
     return String(val);
   }
 
-  // ── Data-Panel aktualisieren ────────────────
-  function updatePanel() {
-    if (!liveValuesEl) return;
+  function getMeta(key) {
+    const configured = configuredMeasurements.find(m => m.id === key);
+    if (configured) return { label: configured.label || key, unit: configured.unit || '' };
+    return KNOWN[key] || null;
+  }
 
+  function renderConfiguredRows() {
+    if (!liveValuesEl) return;
+    liveValuesEl.innerHTML = '';
+    rowMap = new Map();
+
+    configuredMeasurements.forEach(meta => {
+      const row = document.createElement('div');
+      row.className = 'value-row';
+      row.dataset.key = meta.id;
+      row.innerHTML = '<span class="value-label"></span><span class="value-number">—</span>';
+      row.querySelector('.value-label').textContent = (meta.label || meta.id) + ':';
+      liveValuesEl.appendChild(row);
+      rowMap.set(meta.id, row);
+    });
+  }
+
+  function updateConfiguredPanel() {
+    if (!liveValuesEl) return;
+    configuredMeasurements.forEach(meta => {
+      const row = rowMap.get(meta.id);
+      if (!row) return;
+      const numberEl = row.querySelector('.value-number');
+      const val = latest[meta.id];
+      const formatted = formatValue(val);
+      numberEl.textContent = meta.unit && formatted !== '—' ? formatted + ' ' + meta.unit : formatted;
+    });
+  }
+
+  function updateFallbackPanel() {
+    if (!liveValuesEl) return;
     const keys = Object.keys(latest);
     if (keys.length === 0) return;
 
-    // Placeholder ausblenden
-    const placeholder = liveValuesEl.closest('.panel-body')
-      ?.querySelector('.panel-placeholder');
-    if (placeholder) placeholder.style.display = 'none';
-
-    // Bestehende Zeilen einsammeln
     const existing = new Map();
     liveValuesEl.querySelectorAll('.value-row').forEach(row => {
-      const label = row.querySelector('.value-label')?.textContent?.replace(':', '')?.trim();
-      if (label) existing.set(label, row);
+      const key = row.dataset.key;
+      if (key) existing.set(key, row);
     });
 
-    // Zeilen für aktuelle Keys aktualisieren/erzeugen
-    const usedKeys = new Set();
-
     keys.forEach(key => {
-      const meta = KNOWN[key];
+      const meta = getMeta(key);
       const label = meta ? meta.label : key;
       const unit = meta ? meta.unit : '';
-      usedKeys.add(label);
+      const formatted = formatValue(latest[key]);
+      const display = unit && formatted !== '—' ? formatted + ' ' + unit : formatted;
 
-      const val = latest[key];
-      const formatted = formatValue(val);
-      const displayText = unit ? `${formatted} ${unit}` : formatted;
-
-      if (existing.has(label)) {
-        // Update bestehende Zeile
-        const row = existing.get(label);
-        row.querySelector('.value-number').textContent = displayText;
+      if (existing.has(key)) {
+        existing.get(key).querySelector('.value-number').textContent = display;
       } else {
-        // Neue Zeile einfügen
         const row = document.createElement('div');
         row.className = 'value-row';
-        row.innerHTML = `<span class="value-label">${label}:</span><span class="value-number">${displayText}</span>`;
+        row.dataset.key = key;
+        row.innerHTML = '<span class="value-label">' + label + ':</span><span class="value-number">' + display + '</span>';
         liveValuesEl.appendChild(row);
       }
     });
-
-    // Entfernte Keys ausblenden (optional: wir lassen sie stehen)
-    // nicht entfernen — Benutzer sehen alte Werte weiter
   }
 
-  // ── Öffentliche API ──────────────────────────
+  function updatePanel() {
+    if (!liveValuesEl) return;
+    if (configuredMeasurements.length > 0) updateConfiguredPanel();
+    else updateFallbackPanel();
+  }
+
   const ExperimentAPI = {
+    configure(manifest) {
+      configuredMeasurements = Array.isArray(manifest && manifest.measurements)
+        ? manifest.measurements.map(m => ({ id: m.id, label: m.label, unit: m.unit || '' }))
+        : [];
+      renderConfiguredRows();
+      updatePanel();
+    },
 
-    /**
-     * Ein Measurement auslösen.
-     * @param {Object} data  Key-Value-Paare, z.B. { t: 1.25, velocity: 3.1 }
-     */
     emitMeasurement(data) {
-      if (!data || typeof data !== 'object') {
-        console.warn('[ExperimentAPI] emitMeasurement: data must be an object');
-        return;
-      }
-
-      // Latest aktualisieren
+      if (!data || typeof data !== 'object') return;
       Object.assign(latest, data);
       history.push({ ...data, _ts: Date.now() });
       if (history.length > HISTORY_MAX) history.shift();
-
-      // Panel aktualisieren
       updatePanel();
-
-      // DOM-Event
       document.dispatchEvent(new CustomEvent('experiment:measurement', {
-        detail: { data: { ...data }, latest: { ...latest } }
+        detail: { data: { ...data }, latest: { ...latest } },
       }));
-
-      console.log('[ExperimentAPI] Measurement:', data);
     },
 
-    /**
-     * Alle gespeicherten Messungen abrufen.
-     */
-    getHistory() {
-      return [...history];
-    },
+    getHistory() { return [...history]; },
+    getLatest() { return { ...latest }; },
 
-    /**
-     * Aktuelle Werte abrufen.
-     */
-    getLatest() {
-      return { ...latest };
-    },
-
-    /**
-     * History und Panel zurücksetzen.
-     */
     clear() {
       history = [];
       latest = {};
-      if (liveValuesEl) {
-        liveValuesEl.innerHTML = '';
-      }
-      const placeholder = liveValuesEl?.closest('.panel-body')
-        ?.querySelector('.panel-placeholder');
-      if (placeholder) placeholder.style.display = '';
+      if (configuredMeasurements.length > 0) renderConfiguredRows();
+      else if (liveValuesEl) liveValuesEl.innerHTML = '';
     },
 
-    /**
-     * Bekannte Metadaten für einen Key abrufen.
-     */
-    getMeta(key) {
-      return KNOWN[key] || null;
+    getMeta(key) { return getMeta(key); },
+
+    exportCSV(filename) {
+      if (history.length === 0) return;
+      const keys = configuredMeasurements.length > 0
+        ? configuredMeasurements.map(m => m.id)
+        : Array.from(history.reduce((set, row) => {
+            Object.keys(row).forEach(k => { if (k !== '_ts') set.add(k); });
+            return set;
+          }, new Set()));
+
+      const header = ['_ts', ...keys].join(',');
+      const rows = history.map(row => {
+        const vals = [row._ts || ''];
+        keys.forEach(k => vals.push(row[k] !== undefined ? row[k] : ''));
+        return vals.join(',');
+      });
+      const csv = [header, ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'flabs-data-' + new Date().toISOString().slice(0, 10) + '.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    },
+
+    exportJSON(filename) {
+      if (history.length === 0) return;
+      const json = JSON.stringify(history, null, 2);
+      const blob = new Blob([json], { type: 'application/json;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'flabs-data-' + new Date().toISOString().slice(0, 10) + '.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     },
   };
 
-  // ── Init bei DOMContentLoaded ────────────────
   function init() {
     if (initialized) return;
     initialized = true;
-
     liveValuesEl = document.getElementById('live-values');
-
     if (!liveValuesEl) {
-      console.warn('[ExperimentAPI] #live-values not found — deferred init möglich');
-      // Retry kurz später
       setTimeout(() => {
         liveValuesEl = document.getElementById('live-values');
-        if (!liveValuesEl) {
-          console.warn('[ExperimentAPI] #live-values nicht gefunden, Panel offline');
-        }
+        if (configuredMeasurements.length > 0) renderConfiguredRows();
       }, 500);
+      return;
     }
+    if (configuredMeasurements.length > 0) renderConfiguredRows();
   }
 
   if (document.readyState === 'loading') {
@@ -215,8 +240,6 @@
     init();
   }
 
-  // ── Global registrieren ──────────────────────
   window.ExperimentAPI = ExperimentAPI;
-
-  console.log('[ExperimentAPI] ✅ Measurement API bereit');
+  console.log('[ExperimentAPI] ready');
 })();

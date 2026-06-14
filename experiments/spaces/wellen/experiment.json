@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 1,
+  "id": "wellen",
+  "title": "Wave Interference — 2D Ripple Tank",
+  "domain": "physics",
+  "engine": "canvas-2d",
+  "level": "school",
+  "concepts": [
+    "Waves",
+    "Interference",
+    "Superposition",
+    "Phase shift",
+    "Constructive & destructive interference"
+  ],
+  "parameters": {
+    "wavelength": {
+      "label": "Wavelength λ",
+      "min": 30,
+      "max": 150,
+      "step": 5,
+      "default": 80,
+      "unit": "px",
+      "meaning": "Distance between wave crests. Larger λ → wider interference fringes."
+    },
+    "sourceDistance": {
+      "label": "Source separation d",
+      "min": 20,
+      "max": 250,
+      "step": 5,
+      "default": 120,
+      "unit": "px",
+      "meaning": "Distance between the two point sources. Larger d → narrower fringes."
+    },
+    "phaseShift": {
+      "label": "Phase shift Δφ",
+      "min": 0,
+      "max": 360,
+      "step": 15,
+      "default": 0,
+      "unit": "°",
+      "meaning": "Phase offset of the second source. Shifts the interference pattern sideways."
+    },
+    "amplitude": {
+      "label": "Amplitude A",
+      "min": 0.2,
+      "max": 2.0,
+      "step": 0.1,
+      "default": 1.0,
+      "unit": "a.u.",
+      "meaning": "Strength of each individual wave."
+    }
+  },
+  "measurements": [
+    {
+      "id": "maxAuslenkung",
+      "label": "Max displacement",
+      "unit": "a.u."
+    },
+    {
+      "id": "intensitaet",
+      "label": "Relative intensity",
+      "unit": "a.u."
+    },
+    {
+      "id": "knotenAnzahl",
+      "label": "Nodes (zero crossings)",
+      "unit": ""
+    }
+  ],
+  "formulas": [
+    {
+      "id": "superposition-2d",
+      "name": "2D Superposition (circular waves)",
+      "formula": "y_total(P) = A₁·sin(k·r₁ - ωt + φ₁) + A₂·sin(k·r₂ - ωt + φ₂)",
+      "variables": {
+        "A₁ = A₂": "amplitude, decays as 1/√(r) in 2D",
+        "k": "2π/λ — wave number",
+        "r₁, r₂": "distances from P to source 1 and 2",
+        "ω": "2π·c/λ — angular frequency (c = const)",
+        "φ₁, φ₂": "phase offsets"
+      },
+      "validWhen": "Two point sources, identical amplitude, no damping, linear superposition",
+      "note": "Constructive: Δr = nλ. Destructive: Δr = (n+½)λ."
+    },
+    {
+      "id": "amplitude-decay-2d",
+      "name": "2D circular wave amplitude decay",
+      "formula": "A(r) = A₀ / √(1 + r/r₀)",
+      "variables": {
+        "A₀": "amplitude at source",
+        "r": "distance from source",
+        "r₀": "reference distance (20 px)"
+      },
+      "validWhen": "2D circular waves, energy conservation"
+    },
+    {
+      "id": "wave-speed-relation",
+      "name": "Wave speed relation",
+      "formula": "c = λ · f,  ω = 2π · c/λ",
+      "variables": {
+        "c": "wave speed (constant 2.5 px/frame)",
+        "λ": "wavelength",
+        "f": "frequency",
+        "ω": "angular frequency"
+      },
+      "validWhen": "All wave types, dispersion-free medium"
+    }
+  ]
+}

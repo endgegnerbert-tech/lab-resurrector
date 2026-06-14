@@ -1,127 +1,105 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LabResurrector — AI Physics Lab</title>
+  <title>flabs — physics playground</title>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <div id="app">
-    <!-- Top Bar -->
-    <header id="topbar">
-      <h1>🧪 LabResurrector</h1>
-      <span class="subtitle">AI-gestütztes Physiklabor</span>
-      <!-- Legacy Quick-Sims (Pendel/Wurf) -->
-      <div class="experiment-selector legacy-selector">
-        <label for="sim-select">⚡ Quick-Sim:</label>
-        <select id="sim-select">
-          <option value="pendulum">Pendel</option>
-          <option value="projectile">Schiefer Wurf</option>
-        </select>
+    <!-- LAUNCHPAD VIEW -->
+    <div id="view-launchpad" class="view active">
+      <header id="launchpad-header">
+        <div class="brand">
+          <h1>flabs</h1>
+          <span class="tagline">physics, but make it fun</span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-api-key" class="btn-ghost" title="Enter API key">🔑 Key</button>
+          <button id="btn-new-space" class="btn-primary">+ New Lab</button>
+        </div>
+      </header>
+
+      <main id="card-grid"></main>
+
+      <div id="empty-state" class="hidden">
+        <p>No labs yet</p>
+        <p class="sub">Hit <strong>+ New Lab</strong> to create one</p>
       </div>
+    </div>
 
-      <!-- Separator -->
-      <span class="selector-divider"></span>
+    <!-- SPACE VIEW -->
+    <div id="view-space" class="view">
+      <header id="space-header">
+        <button id="btn-back" class="btn-ghost">← Back</button>
+        <div class="space-title-group">
+          <h2 id="space-title"></h2>
+          <span id="space-meta" class="meta"></span>
+        </div>
+        <span id="api-key-status" class="api-status" title="API key status">🔒</span>
+        <button id="btn-delete-space" class="btn-danger-outline" title="Delete lab">x</button>
+      </header>
 
-      <!-- Space Selector (aus experiments/manifest.json) -->
-      <div class="experiment-selector space-selector">
-        <label for="space-select">📁 Space:</label>
-        <select id="space-select">
-          <option value="">— Spaces laden…</option>
-        </select>
-      </div>
-      <div class="phase-indicator" id="phase-indicator">
-        <span class="phase active" data-phase="hypothesis">🤔 Hypothese</span>
-        <span class="phase" data-phase="experiment">🔬 Test</span>
-        <span class="phase" data-phase="reflection">💡 Reflexion</span>
-      </div>
-    </header>
+      <div id="space-layout">
+        <div id="space-canvas-area">
+          <iframe id="space-frame" title="lab iframe"></iframe>
+        </div>
 
-    <!-- Main Content -->
-    <main id="main">
-      <!-- Left Panel: Simulation + Data/Formula -->
-      <div id="left-panel">
-        <!-- Simulation Canvas -->
-        <section id="sim-section">
-          <canvas id="sim-canvas"></canvas>
-          <div id="sim-overlay">
-            <div id="sim-controls">
-              <button id="btn-play" title="Play/Pause">⏸</button>
-              <button id="btn-reset" title="Reset">🔄</button>
-            </div>
-            <div id="param-panel">
-              <!-- Dynamisch befüllt -->
-            </div>
-          </div>
-        </section>
+        <div id="sidebar-resizer" aria-hidden="true" title="Drag to resize sidebar"></div>
 
-        <!-- Bottom Panels: Data & Formula -->
-        <div id="bottom-panels">
-          <section id="data-panel">
-            <div class="panel-header">
-              <span>📊 Daten & Messwerte</span>
-              <span class="panel-badge">live</span>
-            </div>
-            <div class="panel-body">
-              <div id="live-values">
-                <div class="value-row"><span class="value-label">Zeit:</span><span class="value-number">0.00 s</span></div>
-                <div class="value-row"><span class="value-label">Position x:</span><span class="value-number">0.00 m</span></div>
-                <div class="value-row"><span class="value-label">Geschwindigkeit:</span><span class="value-number">0.00 m/s</span></div>
-                <div class="value-row"><span class="value-label">Energie:</span><span class="value-number">0.00 J</span></div>
-              </div>
-              <div class="panel-placeholder">
-                <span class="placeholder-hint">Messwerte erscheinen während der Simulation</span>
+        <aside id="space-sidebar">
+          <!-- Controls -->
+          <section id="param-section">
+            <div class="section-header">
+              <span>Controls</span>
+              <div class="control-buttons">
+                <button id="btn-play" title="Play/Pause" class="btn-icon">&#9646;&#9646;</button>
+                <button id="btn-reset" title="Reset" class="btn-icon">&#x21BA;</button>
               </div>
             </div>
+            <div id="param-panel"></div>
           </section>
-          <section id="formula-panel">
-            <div class="panel-header">
-              <span>📐 Formel & Rechnung</span>
-              <span class="panel-badge">Modell</span>
-            </div>
-            <div class="panel-body">
+
+          <!-- Formula -->
+          <section id="formula-section" class="collapsible collapsed">
+            <button class="section-toggle" data-target="formula-body">Formula</button>
+            <div id="formula-body" class="section-body">
               <div class="formula-display">
-                <div class="formula-box">T = 2π √(L / g)</div>
-                <div class="formula-vars">
-                  <div class="var-row"><span class="var-name">T</span><span class="var-desc">Periodendauer</span></div>
-                  <div class="var-row"><span class="var-name">L</span><span class="var-desc">Pendellänge</span></div>
-                  <div class="var-row"><span class="var-name">g</span><span class="var-desc">Erdbeschleunigung</span></div>
-                </div>
+                <div class="formula-box">—</div>
+                <div class="formula-vars"></div>
               </div>
               <div class="computed-result">
-                <span class="result-label">Erwartet:</span>
+                <span class="result-label">Expected:</span>
                 <span class="result-value">—</span>
               </div>
             </div>
           </section>
-        </div>
-      </div>
 
-      <!-- Chat Panel -->
-      <section id="chat-section">
-        <div id="chat-header">
-          <span>🤖 pi Agent</span>
-          <button id="btn-deepdive" title="Deep Research">🔍 Research</button>
-        </div>
-        <div id="chat-messages">
-          <!-- Willkommensnachricht wird per JS eingefügt -->
-        </div>
-        <div id="chat-input-area">
-          <textarea id="chat-input" rows="2" placeholder="Antworte dem AI-Experimentleiter..."></textarea>
-          <button id="chat-send">Senden</button>
-        </div>
-      </section>
-    </main>
+          <!-- Data -->
+          <section id="data-section" class="collapsible">
+            <button class="section-toggle" data-target="data-body">Data</button>
+            <div id="data-body" class="section-body">
+              <div id="live-values"></div>
+              <div id="data-actions">
+                <button id="btn-export-csv" class="btn-sm">Export CSV</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Chat -->
+          <section id="chat-section">
+            <div id="chat-messages"></div>
+            <div id="chat-input-area">
+              <textarea id="chat-input" rows="1" placeholder="Ask the lab assistant..."></textarea>
+              <button id="chat-send" class="btn-primary btn-sm">Send</button>
+            </div>
+          </section>
+        </aside>
+      </div>
+    </div>
   </div>
 
-  <!-- External Libraries -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.20.0/matter.min.js"></script>
-
-  <!-- App Modules -->
-  <script src="js/sim/engine.js"></script>
-  <script src="js/sim/pendulum.js"></script>
-  <script src="js/sim/projectile.js"></script>
   <script src="js/ws/client.js"></script>
   <script src="js/chat/panel.js"></script>
   <script src="js/experiment/api.js"></script>

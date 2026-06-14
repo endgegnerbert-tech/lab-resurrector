@@ -1,148 +1,116 @@
-# Pitch — LabResurrector
+# Pitch — flabs
 
 > DSH Hacks V1 | AI x STEM Education
-> Stand: 13. Juni 2026
+> June 2026
 
 ---
 
-## One‑Liner
+## One-Liner
 
-> *"Jeder Schüler weltweit kann ein Physiklabor in der Tasche haben — keine teuren Geräte, keine Chemikalien, kein Risiko. Nur Browser + AI."*
-
----
-
-## Elevator Pitch (60 Sekunden)
-
-**Problem:** Millionen Schüler weltweit haben keinen Zugang zu Physik‑ und Chemielaboren. Echte Labore sind teuer, gefährlich und platzintensiv. Bestehende digitale Lösungen wie PhET sind passiv — sie erklären nicht *warum* etwas passiert.
-
-**Unsere Lösung:** **LabResurrector** erweckt vergessene Open‑Source‑Simulationen zu neuem Leben. Ein AI‑Agent (pi) kuratiert alte, ungepflegte Open‑Source‑Projekte aus Physik und Chemie, indiziert sie in einem lokalen Vektor‑Speicher (turbovec) und macht sie interaktiv — mit einem Chat‑Interface, das Schülern erklärt, was im Experiment passiert, Parameter live steuert und adaptives Feedback gibt.
-
-**Tech‑Stack:** matter.js für die Physik‑Engine, FastAPI als Backend, Groq für schnelle, kostenlose LLM‑Antworten, turbovec als lokalen RAG‑Index — alles Open Source, alles datenschutzfreundlich.
-
-**Impact:** Learning by Doing — der Schüler macht das Experiment, sieht was passiert, und der AI erklärt *warum*. Das ist der Unterschied zwischen Verstehen und Auswendiglernen.
+> *"Every student worldwide can have a physics lab in their pocket. No expensive equipment, no chemicals, no risk. Just a browser + AI."*
 
 ---
 
-## Pitch Deck (Slides)
+## Elevator Pitch (60 seconds)
 
-### Slide 1: Titel
-- **LabResurrector**
-- AI‑gestütztes Virtual Lab aus toten OSS‑Projekten
-- DSH Hacks V1
+**Problem:** Millions of students worldwide have no access to physics labs. Real labs are expensive, dangerous, and space-intensive. Existing digital solutions like PhET are passive — they show *what* happens but don't explain *why*.
 
-### Slide 2: Das Problem
-- 🏫 9 von 10 Schulen in Entwicklungsländern haben kein Physiklabor
-- 💰 Ein Schul‑Labor kostet >$5000
-- 📱 Aber: 85% der Schüler haben ein Smartphone
-- 🧠 Bestehende Lösungen (PhET, YouTube) sind *passiv*
+**Our Solution:** **flabs** turns a browser into an interactive physics lab with an AI lab assistant. An AI agent (pi SDK) with custom physics tools controls simulations live — changing parameters, explaining concepts, and guiding students through the scientific process. Every user can bring their own AI model (DeepSeek, Claude, Groq, Ollama…).
 
-### Slide 3: Unsere Lösung
+**Tech Stack:** Node.js + Express + WebSocket for the server, pi SDK for the AI agent, pure Canvas 2D for physics simulation. All open source, all in the browser.
+
+**Impact:** Learning by Doing — the student makes the experiment, sees what happens, and the AI explains *why*. That's the difference between understanding and memorizing.
+
+---
+
+## Problem & Solution
+
+| Problem | Our Solution |
+|---------|-------------|
+| 🏫 9/10 schools in developing countries have no physics lab | 🌐 Browser-only, no installation |
+| 💰 Real lab costs >$5,000 | 🆓 Free, open source |
+| 📱 85% of students have a smartphone | 📱 Runs on any device |
+| 🧠 Existing solutions are passive | 🤖 AI guides active learning |
+
+---
+
+## Architecture (Live System)
+
 ```
-┌─────────────────────────────────────┐
-│  🎮 Interaktive Simulation          │
-│  ┌────────────────┐ ┌─────────────┐ │
-│  │  Pendel-Sim    │ │ 💬 Chat AI │ │
-│  │  [●●○○○○○]     │ │ "Warum     │ │
-│  │  Masse: 2kg    │ │  schwingt  │ │
-│  │  Länge: 1.5m   │ │  es immer  │ │
-│  └────────────────┘ │  gleich?"  │ │
-│                      │ → Erklärung│ │
-│                      │ + Parameter│ │
-│                      │ ändern ✓  │ │
-│                      └─────────────┘ │
-└─────────────────────────────────────┘
+Browser (Canvas UI + Chat)
+       ↕ WebSocket (JSON)
+Node.js Server (Express + pi SDK)
+       ↕ pi Agent Session
+Custom Tools (sim_set_param, source_search, physics_formula_lookup, emet…)
+       ↕ AI Model (user's choice: DeepSeek, Claude, Groq, Ollama…)
 ```
 
-### Slide 4: Die OSS‑Revival‑Story
-Wir erwecken tote Open‑Source‑Projekte wieder:
-- **physics-lab** (⭐23, unmaintained seit 2020) → Mechanics‑Sim
-- **ThePhysicsHub** (⭐129, unmaintained seit 2021) → p5.js‑Sammlung
-- **ChemLab** (⭐2, GPL-3.0) → Cation Analysis
+### Key Design Decision: Bring Your Own AI
 
-→ Ihre READMEs, Doks und Formeln werden zum RAG‑Corpus
-
-### Slide 5: Der AI‑Stack
-```
-User: "Was passiert wenn ich die Masse verdopple?"
-
-  ↓ turbovec (lokal, schnell) 
-  → findet relevante Formeln + Doku
-
-  ↓ Groq (kostenlos, <100ms)
-  → generiert Erklärung + Steuerbefehle
-
-  ↓ matter.js (Browser)
-  → Simulation läuft mit neuen Werten
-
-  ↓ pi Agent (für Bootstrap)
-  → scannt OSS‑Repos → befüllt Index
-```
-
-### Slide 6: Warum gewinnen wir?
-| Andere Teams | Wir |
-|-------------|-----|
-| GPT‑Chat + Quiz → passiv | **Interaktive Simulation** → aktiv |
-| Lernplan‑Generator → kein Experiment | **Learning by Doing** |
-| Flashcard‑App → Auswendiglernen | **Konzept‑Verständnis** |
-| SaaS‑abhängig | **Open Source + lokal** |
-
-### Slide 7: 1‑Tag MVP
-- ✅ matter.js Canvas mit 2 Szenen (Pendel, Schiefer Wurf)
-- ✅ Chat‑Panel + Agent mit RAG
-- ✅ 50+ Dokument‑Chunks in turbovec
-- ✅ Groq LLM für Erklärungen
-- ✅ pi‑Agent für OSS‑Kuration
-
-### Slide 8: Vision
-**LabResurrector** als Plattform:
-1. **Physik** → Pendel, Optik, Elektromagnetismus
-2. **Chemie** → Kationen‑Analyse, Moleküle
-3. **Biologie** → Evolution, Genetik
-4. **Astronomie** → Sternkarten, Planeten
-
-Alles AI‑gestützt, alles Open Source, für jeden zugänglich.
+Instead of hardcoding a single model provider, flabs uses the **pi SDK** which supports 50+ models. The user configures their preferred model once, and flabs uses it for all AI interactions. No vendor lock-in, no shared API keys.
 
 ---
 
-## Judging Criteria Mapping
+## Current Labs
 
-| Kriterium | Wie wir es adressieren |
-|-----------|----------------------|
-| **AI x STEM Education** | LLM + RAG für Adaptive Learning + Simulation |
-| **Meaningful Technical Product** | Full‑Stack: Frontend (Canvas) + Backend (FastAPI) + AI (Groq + RAG) |
-| **Interactivity** | Echtzeit‑Parameter‑Manipulation, Live‑Canvas, Chat |
-| **Innovation** | OSS‑Revival + Local‑RAG + Agent‑gesteuerte Kuration |
-| **Impact** | Globaler Zugang zu Science Education, kein Budget nötig |
+### 🚀 Water Rocket (fully implemented)
+- Realistic 2-bottle rocket physics: pressure thrust, rocket equation, projectile motion
+- Parameters: Pressure (1-6 bar), water ratio, launch angle
+- Live: height, range, velocity, flight time
+- Formula prediction vs. actual flight
 
----
+### 🌊 Wave Interference (fully implemented)
+- Two coherent point sources, visible superposition
+- Parameters: Wavelength, source distance, phase shift, amplitude
+- Shows constructive/destructive interference in real-time
 
-## Demo Script
-
-### 1. Start (10s)
-- Seite laden → Pendel-Simulation im Canvas
-- Chat Panel: "Willkommen bei LabResurrector!"
-
-### 2. Erste Frage (20s)
-- User tippt: "Was passiert wenn ich die Masse verdopple?"
-- Canvas zeigt Pendel mit Masse m=1kg
-- AI antwortet + setzt m=2kg + Pendel schwingt langsamer ✓
-
-### 3. Zweite Interaktion (20s)
-- User: "Und bei kürzerem Seil?"
-- AI: Erklärt T = 2π√(L/g) → setzt L=1m → Pendel schwingt schneller ✓
-
-### 4. Themenwechsel (10s)
-- Dropdown → "Schiefer Wurf"
-- Neue Simulation im Canvas
-- Chat: "Welchen Winkel für maximale Weite?"
+### 🧪 Lab Space System
+- Each experiment runs in an isolated iframe
+- Main app provides controls, data panel, formula panel, AI chat
+- postMessage bridge for communication
+- Export measurements as CSV/JSON
 
 ---
 
-## Quellen
+## Demo Script (2 minutes)
 
-- [DSH Hacks V1 Devpost](https://dsh-hacks-v1.devpost.com)
-- [PhET Interactive Simulations](https://phet.colorado.edu)
-- [matter.js GitHub](https://github.com/liabru/matter-js)
-- [Open Source Physics](https://github.com/OpenSourcePhysics)
-- [turbovec](https://www.youtube.com/watch?v=ZEPeSIJQXTE)
-- [pi research tools](https://github.com/drsh4dow/pi-web-minimal/)
+1. **Start** → Browser opens, Launchpad shows lab cards
+2. **Open Lab** → Click "Water Rocket"
+3. **Launch** → Press Play → Rocket flies with real physics
+4. **Tweak** → Adjust pressure from 3→5 bar → Launch again → Higher flight
+5. **Data** → See live measurements: height, range, velocity
+6. **Switch** → Back → Open "Wave Interference" → Adjust wavelength → Pattern shifts
+
+### With AI:
+7. **Chat** → "Why does the rocket go higher with more pressure?" → AI explains thrust formula
+8. **Experiment** → "Show me 45° vs 30° launch" → AI adjusts angle, compares results
+
+---
+
+## Judging Criteria
+
+| Criterion | How We Address It |
+|-----------|------------------|
+| **AI x STEM Education** | AI lab assistant + interactive physics + inquiry-based learning |
+| **Meaningful Technical Product** | Full-stack: Node.js + WebSocket + pi Agent + Canvas 2D |
+| **Interactivity** | Real-time parameter control, live data, streaming AI chat |
+| **Innovation** | pi-powered AI agent, bring-your-own-model, space isolation |
+| **Impact** | Global science access: browser-only, free, open source |
+
+---
+
+## Links
+
+- **GitHub:** [your-repo-url]
+- **Devpost:** https://dsh-hacks-v1.devpost.com
+- **Built with:** [pi-coding-agent](https://www.npmjs.com/package/@earendil-works/pi-coding-agent)
+
+---
+
+## Sources
+
+- [PhET Interactive Simulations](https://phet.colorado.edu) — didactic gold standard
+- [matter-js](https://github.com/liabru/matter-js) — MIT, physics engine
+- [Open Source Physics](https://github.com/OpenSourcePhysics) — GPL-3.0
+- [pi coding agent SDK](https://www.npmjs.com/package/@earendil-works/pi-coding-agent)
+- AIRIS Concept — Heidelberg University of Education (2026)

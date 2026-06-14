@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "domain": "physics",
+  "topic": "electricity",
+  "description": "Grundlegende Formeln der Elektrizitätslehre für spätere Spaces.",
+  "lastUpdated": "2026-06-14",
+  "formulas": [
+    {
+      "id": "ohms-law",
+      "name": "Ohmsches Gesetz",
+      "formula": "U = R · I",
+      "variables": {
+        "U": "Spannung (V)",
+        "R": "Widerstand (Ω)",
+        "I": "Stromstärke (A)"
+      },
+      "validWhen": "Ohmscher Widerstand bei konstanter Temperatur",
+      "exampleCalculation": "U = 100 Ω · 0.02 A = 2 V",
+      "sourceIds": ["physicshub-github-io"]
+    },
+    {
+      "id": "electric-power",
+      "name": "Elektrische Leistung",
+      "formula": "P = U · I",
+      "variables": {
+        "P": "Leistung (W)",
+        "U": "Spannung (V)",
+        "I": "Stromstärke (A)"
+      },
+      "validWhen": "Gleichstrom oder Momentanwerte",
+      "sourceIds": ["physicshub-github-io"]
+    },
+    {
+      "id": "capacitor-charge",
+      "name": "Kondensatorladung",
+      "formula": "Q = C · U",
+      "variables": {
+        "Q": "Ladung (C)",
+        "C": "Kapazität (F)",
+        "U": "Spannung (V)"
+      },
+      "validWhen": "Idealer Kondensator",
+      "sourceIds": []
+    }
+  ]
+}

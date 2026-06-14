@@ -1,20 +1,33 @@
 {
   "spaces": [
     {
-      "id": "example-pendulum",
-      "title": "Pendelperiode untersuchen",
-      "path": "/experiments/spaces/example-pendulum/",
+      "id": "wellen",
+      "title": "Wave Interference — 2D Ripple Tank",
+      "path": "/experiments/spaces/wellen/",
       "domain": "physics",
-      "concepts": ["Pendel", "Periodendauer", "Gravitation", "Harmonische Schwingung"],
-      "createdAt": "2026-06-14T00:00:00Z"
+      "concepts": [
+        "Waves",
+        "Interference",
+        "Superposition",
+        "Phase shift",
+        "Constructive & destructive interference"
+      ],
+      "createdAt": "2026-06-14T18:20:00Z"
     },
     {
-      "id": "pendulum-period",
-      "title": "Pendelperiode untersuchen",
-      "path": "/experiments/spaces/pendulum-period/",
+      "id": "rocket",
+      "title": "Water Rocket",
+      "path": "/experiments/spaces/rocket/",
       "domain": "physics",
-      "concepts": ["Pendel", "Periodendauer", "Gravitation"],
-      "createdAt": "2026-06-14T12:00:00Z"
+      "concepts": [
+        "Projectile motion",
+        "Thrust",
+        "Pressure",
+        "Momentum conservation",
+        "Tsiolkovsky rocket equation",
+        "Optimization"
+      ],
+      "createdAt": "2026-06-14T16:20:09.074Z"
     }
   ]
 }

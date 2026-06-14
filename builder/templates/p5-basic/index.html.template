@@ -32,10 +32,14 @@
       align-items: center;
       justify-content: center;
     }
-    #sim-section canvas {
-      display: block;
+    #p5-container {
       width: 100%;
       height: 100%;
+    }
+    #sim-section canvas {
+      display: block;
+      width: 100% !important;
+      height: 100% !important;
     }
     #controls {
       position: absolute;

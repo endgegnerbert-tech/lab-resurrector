@@ -1,13 +1,14 @@
 {
-  "name": "lab-resurrector",
+  "name": "flabs",
   "version": "1.0.0",
-  "description": "AI-gestütztes Virtual Lab — powered by pi",
+  "description": "flabs — physics playground powered by pi",
   "type": "module",
   "scripts": {
     "start": "node server.js",
     "pi": "node server.js"
   },
   "dependencies": {
+    "@black-knight.dev/emet": "^1.3.2",
     "@earendil-works/pi-coding-agent": "^0.79.3",
     "express": "^4.21.0",
     "typebox": "^1.2.9",

@@ -2,7 +2,7 @@
  * ws/client.js — WebSocket Client für pi Agent Server
  * 
  * Verbindet Browser ↔ pi Agent (via Node.js Server).
- * Streamed Chat, Sim-Controls, Questions live.
+ * Streamed Chat and Sim-Controls.
  */
 
 const PiClient = (() => {
@@ -15,7 +15,8 @@ const PiClient = (() => {
   let isConnected = false;
   let useMock = false; // Fallback wenn Server nicht erreichbar
 
-  const WS_URL = `ws://${window.location.hostname}:3210`;
+  const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const WS_URL = `${WS_PROTOCOL}//${window.location.host}`;
 
   // ── Event System ──────────────────────────────
   function on(event, fn) {
@@ -27,7 +28,9 @@ const PiClient = (() => {
   }
 
   function emit(event, data) {
-    (listeners[event] || []).forEach(fn => fn(data));
+    (listeners[event] || []).forEach(fn => {
+      try { fn(data); } catch (e) { console.warn('[PiClient] handler error:', e); }
+    });
   }
 
   // ── WebSocket Verbindung ──────────────────────
@@ -45,7 +48,7 @@ const PiClient = (() => {
     }
 
     ws.onopen = () => {
-      console.log('[PiClient] ✅ Connected');
+      console.log('[PiClient] Connected');
       isConnected = true;
       reconnectAttempts = 0;
       emit('connected', { mock: false });
@@ -159,9 +162,6 @@ const PiClient = (() => {
       case 'sim_set_param':
         emit('sim_set_param', msg);
         break;
-      case 'sim_switch_scene':
-        emit('sim_switch_scene', msg);
-        break;
       case 'sim_reset':
         emit('sim_reset', msg);
         break;
@@ -169,17 +169,12 @@ const PiClient = (() => {
         emit('sim_highlight', msg);
         break;
 
-      // Question from Agent (blocking)
-      case 'sim_ask_question':
-        emit('sim_ask_question', msg);
-        break;
-      case 'sim_question_answered':
-        emit('sim_question_answered');
-        break;
-
-      // Sim Build
+      // Sim Build / Space Updates
       case 'sim_build_start':
         emit('sim_build_start', msg);
+        break;
+      case 'space_updated':
+        emit('space_updated', msg);
         break;
 
       // State Sync
@@ -191,14 +186,17 @@ const PiClient = (() => {
       case 'info':
         emit('info', msg.text);
         break;
+      case 'chat_system':
+        emit('chat_system', msg.text);
+        break;
     }
   }
 
   // ── Mock Mode (wenn Server offline) ──────────
   let mockResponses = [
-    "Das ist eine interessante Frage! 🧪\n\nWas denkst DU denn? Stell eine Hypothese auf!",
-    "Spannend! 🤔 Was vermutest du, wird passieren?",
-    "Gute Idee! Lass uns das testen. 🎯\nIch passe die Simulation an — beobachte genau!",
+    "That is an interesting question!\n\nWhat do YOU think? Form a hypothesis!",
+    "Interesting! What do you guess will happen?",
+    "Good idea! Let us test it.\nI will adjust the simulation -- watch closely!",
     "Interessant! Hast du eine Vermutung? Dann probieren wir es aus!",
   ];
   let mockResponseIdx = 0;
@@ -240,7 +238,6 @@ const PiClient = (() => {
     send,
     chat,
     updateSimState,
-    sceneChanged,
     on,
     get isConnected() { return isConnected || useMock; },
     get isMock() { return useMock; },

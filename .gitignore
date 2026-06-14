@@ -8,18 +8,10 @@ coverage
 release
 .env
 tmp/
-
-# Geklonte OSS-Referenzen (zu groß fürs Repo)
-references/*
-
-# Vom pi Agent generierte Experimente
-# Alle generierten Spaces ignorieren, aber Registry-Manifest und Seed-Spaces tracken
-experiments/*
-!experiments/manifest.json
-!experiments/spaces/
-experiments/spaces/*
-!experiments/spaces/example-pendulum/
+references/
 
 .pi-context/
 csr.csr
 key.pem
+*.log
+*.pid

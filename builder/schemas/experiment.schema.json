@@ -155,6 +155,10 @@
           "exampleCalculation": {
             "type": "string",
             "description": "Example calculation with actual numbers, shown in the Rechnung panel."
+          },
+          "aiExplanation": {
+            "type": "string",
+            "description": "AI-written explanation of the formula in context of the current simulation. Rendered in the formula panel under 'KI-Erklärung'."
           }
         },
         "additionalProperties": false
