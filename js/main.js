@@ -15,6 +15,7 @@
     const emptyState = document.getElementById('empty-state');
     const newSpaceBtn = document.getElementById('btn-new-space');
     const apiKeyBtn = document.getElementById('btn-api-key');
+    const accountBtn = document.getElementById('btn-account');
     const apiKeyStatus = document.getElementById('api-key-status');
     const backBtn = document.getElementById('btn-back');
     const deleteBtn = document.getElementById('btn-delete-space');
@@ -42,49 +43,84 @@
     const authClearBtn = document.getElementById('btn-auth-clear');
     const authCloseBtn = document.getElementById('btn-auth-close');
 
+    const accountModal = document.getElementById('account-modal');
+    const accountCurrent = document.getElementById('account-current');
+    const accountCreateForm = document.getElementById('account-create-form');
+    const accountLoginForm = document.getElementById('account-login-form');
+    const accountDisplayName = document.getElementById('account-display-name');
+    const accountRecoveryCode = document.getElementById('account-recovery-code');
+    const accountRecoveryResult = document.getElementById('account-recovery-result');
+    const accountLogoutBtn = document.getElementById('btn-account-logout');
+    const accountCloseBtn = document.getElementById('btn-account-close');
+
     let spaces = [];
     let currentSpace = null;
     let isPlaying = true;
     let isDeleting = false;
     let providerCatalog = [];
     let authConfig = readStoredAuth();
+    let account = null;
+    let didRestoreLastSpace = false;
     let isAiProcessing = false;
 
     /* ── Auth storage helpers ────────────────── */
-    function parseStoredAuth(raw, remember) {
+    function parseStoredAuth(raw, remember, includeKey) {
       if (!raw) return null;
       try {
         const p = JSON.parse(raw);
         return {
           provider: String(p.provider || ''),
           modelId: String(p.modelId || ''),
-          apiKey: String(p.apiKey || ''),
+          apiKey: includeKey ? String(p.apiKey || '') : '',
           remember: !!remember,
         };
       } catch (_) { return null; }
     }
 
     function readStoredAuth() {
-      const s = parseStoredAuth(sessionStorage.getItem('flabs_auth'), false);
-      if (s) return s;
-      const l = parseStoredAuth(localStorage.getItem('flabs_auth'), true);
-      if (l) return l;
-      return { provider: '', modelId: '', apiKey: '', remember: false };
+      const prefs = parseStoredAuth(localStorage.getItem('flabs_auth_prefs'), true, false)
+        || parseStoredAuth(localStorage.getItem('flabs_auth'), true, false);
+      const runtime = parseStoredAuth(sessionStorage.getItem('flabs_auth_runtime'), false, true)
+        || parseStoredAuth(sessionStorage.getItem('flabs_auth'), false, true);
+      return {
+        provider: runtime?.provider || prefs?.provider || '',
+        modelId: runtime?.modelId || prefs?.modelId || '',
+        apiKey: runtime?.apiKey || '',
+        remember: !!prefs,
+      };
     }
 
     function persistAuth() {
       sessionStorage.removeItem('flabs_auth');
       localStorage.removeItem('flabs_auth');
-      if (!authConfig.apiKey) return;
-      const payload = JSON.stringify({ provider: authConfig.provider, modelId: authConfig.modelId, apiKey: authConfig.apiKey });
-      if (authConfig.remember) localStorage.setItem('flabs_auth', payload);
-      else sessionStorage.setItem('flabs_auth', payload);
+      sessionStorage.removeItem('flabs_auth_runtime');
+      localStorage.removeItem('flabs_auth_prefs');
+      if (authConfig.provider || authConfig.modelId) {
+        const prefs = JSON.stringify({ provider: authConfig.provider, modelId: authConfig.modelId });
+        if (authConfig.remember) localStorage.setItem('flabs_auth_prefs', prefs);
+      }
+      if (authConfig.apiKey) {
+        sessionStorage.setItem('flabs_auth_runtime', JSON.stringify({ provider: authConfig.provider, modelId: authConfig.modelId, apiKey: authConfig.apiKey }));
+      }
     }
 
     function clearStoredAuth() {
       authConfig = { provider: '', modelId: '', apiKey: '', remember: false };
       sessionStorage.removeItem('flabs_auth');
       localStorage.removeItem('flabs_auth');
+      sessionStorage.removeItem('flabs_auth_runtime');
+      localStorage.removeItem('flabs_auth_prefs');
+    }
+
+    function configureAiForCurrentSpace() {
+      if (!authConfig.apiKey || !authConfig.provider || !authConfig.modelId) { AiAgent.configure(null); return; }
+      AiAgent.configure({
+        provider: authConfig.provider,
+        modelId: authConfig.modelId,
+        apiKey: authConfig.apiKey,
+        spaceId: currentSpace?.private ? currentSpace.id : '',
+        spaceTitle: currentSpace?.title || '',
+      });
     }
 
     function setApiStatus(mode, label) {
@@ -97,6 +133,39 @@
         apiKeyStatus.textContent = 'locked';
         apiKeyStatus.title = 'AI disabled';
       }
+    }
+
+    function updateAccountUi() {
+      if (accountBtn) accountBtn.textContent = account ? '👤 ' + (account.displayName || 'Account') : '👤 Account';
+      if (accountCurrent) accountCurrent.textContent = account
+        ? 'Signed in as ' + (account.displayName || 'Demo account') + '. Private labs are visible only in this account.'
+        : 'Not signed in. Create a private account before making labs.';
+      if (accountLogoutBtn) accountLogoutBtn.classList.toggle('hidden', !account);
+    }
+
+    async function loadAccount() {
+      try {
+        const res = await fetch('/api/account', { credentials: 'same-origin' });
+        const data = await res.json();
+        account = data.user || null;
+      } catch (_) { account = null; }
+      updateAccountUi();
+      return account;
+    }
+
+    function openAccountModal() {
+      if (!accountModal) return;
+      accountRecoveryResult.classList.add('hidden');
+      accountRecoveryResult.textContent = '';
+      updateAccountUi();
+      accountModal.classList.remove('hidden');
+      accountModal.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeAccountModal() {
+      if (!accountModal) return;
+      accountModal.classList.add('hidden');
+      accountModal.setAttribute('aria-hidden', 'true');
     }
 
     /* ── Provider/model modal ───────────────── */
@@ -152,7 +221,7 @@
       authRemember.checked = !!authConfig.remember;
       authClearBtn.classList.toggle('hidden', !authConfig.apiKey);
       authStorageNote.textContent = authRemember.checked
-        ? 'Key stored in localStorage on this device.'
+        ? 'Provider/model stored in localStorage. Key stays in this browser session only.'
         : 'Key stays only for this browser session.';
       authModal.classList.remove('hidden');
       authModal.setAttribute('aria-hidden', 'false');
@@ -172,7 +241,7 @@
     });
     authRemember.addEventListener('change', () => {
       authStorageNote.textContent = authRemember.checked
-        ? 'Key stored in localStorage on this device.'
+        ? 'Provider/model stored in localStorage. Key stays in this browser session only.'
         : 'Key stays only for this browser session.';
     });
 
@@ -272,6 +341,13 @@
 
     AiAgent.on('chat_system', (text) => addChatSystemMessage(text));
 
+    AiAgent.on('space_updated', (msg) => {
+      if (!currentSpace || msg.spaceId !== currentSpace.id) return;
+      fetchSpaceManifest(currentSpace.id);
+      try { spaceFrame.contentWindow.location.reload(); } catch (_) { spaceFrame.src = currentSpace.path; }
+      addChatSystemMessage('Lab files updated: ' + (msg.files || []).join(', '));
+    });
+
     AiAgent.on('tool_execute', (msg) => {
       if (msg.tool === 'sim_set_param' && spaceFrame && spaceFrame.contentWindow) {
         spaceFrame.contentWindow.postMessage({ type: 'param:set', name: msg.name, value: msg.value }, window.location.origin);
@@ -300,7 +376,7 @@
 
       authConfig = { provider, modelId, apiKey, remember: authRemember.checked };
       persistAuth();
-      AiAgent.configure({ provider, modelId, apiKey, spaceId: currentSpace?.id, spaceTitle: currentSpace?.title });
+      configureAiForCurrentSpace();
       setApiStatus('ready', (providerEntry.name || provider) + ' / ' + modelId);
       closeAuthModal();
       addChatSystemMessage('AI connected: ' + (providerEntry.name || provider) + ' / ' + modelId);
@@ -324,6 +400,8 @@
 
     function showSpace(sp) {
       currentSpace = sp;
+      configureAiForCurrentSpace();
+      try { localStorage.setItem('flabs_last_space_id', sp.id); } catch (_) {}
       if (window.ExperimentAPI) { window.ExperimentAPI.configure(null); window.ExperimentAPI.clear(); }
       viewLaunchpad.classList.remove('active');
       viewSpace.classList.add('active');
@@ -338,6 +416,8 @@
 
     function closeSpace() {
       currentSpace = null;
+      configureAiForCurrentSpace();
+      try { localStorage.removeItem('flabs_last_space_id'); } catch (_) {}
       spaceFrame.removeAttribute('src');
       renderParamPanel(null);
       setFormulaPanel(null);
@@ -349,9 +429,19 @@
 
     /* ── Card grid ──────────────────────────── */
     function loadAndRenderSpaces() {
-      return fetch('/api/spaces')
+      return fetch('/api/spaces', { credentials: 'same-origin' })
         .then((r) => r.json())
-        .then((data) => { spaces = data.spaces || []; renderCardGrid(); })
+        .then((data) => {
+          spaces = data.spaces || [];
+          renderCardGrid();
+          if (!didRestoreLastSpace) {
+            didRestoreLastSpace = true;
+            let last = '';
+            try { last = localStorage.getItem('flabs_last_space_id') || ''; } catch (_) {}
+            const match = last && spaces.find((sp) => sp.id === last);
+            if (match) showSpace(match);
+          }
+        })
         .catch(() => { spaces = []; renderCardGrid(); });
     }
 
@@ -401,7 +491,7 @@
 
     /* ── Manifest / panels ──────────────────── */
     function fetchSpaceManifest(spaceId) {
-      fetch('/api/spaces/' + encodeURIComponent(spaceId) + '/manifest')
+      fetch('/api/spaces/' + encodeURIComponent(spaceId) + '/manifest', { credentials: 'same-origin' })
         .then((r) => (r.ok ? r.json() : null))
         .then((manifest) => {
           if (window.ExperimentAPI) window.ExperimentAPI.configure(manifest);
@@ -583,6 +673,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (!authModal.classList.contains('hidden') && e.key === 'Escape') { e.preventDefault(); closeAuthModal(); return; }
+      if (accountModal && !accountModal.classList.contains('hidden') && e.key === 'Escape') { e.preventDefault(); closeAccountModal(); return; }
       if (e.key === ' ' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
         e.preventDefault();
         if (playBtn) playBtn.click();
@@ -604,6 +695,67 @@
     });
 
     /* ── Navigation ─────────────────────────── */
+    if (accountBtn) accountBtn.addEventListener('click', openAccountModal);
+    if (accountCloseBtn) accountCloseBtn.addEventListener('click', closeAccountModal);
+    document.querySelectorAll('[data-close-account="true"]').forEach((el) => {
+      el.addEventListener('click', closeAccountModal);
+    });
+
+    if (accountCreateForm) {
+      accountCreateForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch('/api/account/create', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ displayName: accountDisplayName.value.trim() }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Could not create account');
+          account = data.user;
+          updateAccountUi();
+          accountRecoveryResult.textContent = 'Save this recovery code now. It is shown only once:\n\n' + data.recoveryCode;
+          accountRecoveryResult.classList.remove('hidden');
+          addChatSystemMessage('Private account created. Save your recovery code.');
+          await loadAndRenderSpaces();
+        } catch (err) { addChatSystemMessage(err.message); }
+      });
+    }
+
+    if (accountLoginForm) {
+      accountLoginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          const res = await fetch('/api/account/login', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ recoveryCode: accountRecoveryCode.value.trim() }),
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Could not log in');
+          account = data.user;
+          updateAccountUi();
+          closeAccountModal();
+          addChatSystemMessage('Signed in. Private labs loaded.');
+          await loadAndRenderSpaces();
+        } catch (err) { addChatSystemMessage(err.message); }
+      });
+    }
+
+    if (accountLogoutBtn) {
+      accountLogoutBtn.addEventListener('click', async () => {
+        await fetch('/api/account/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
+        account = null;
+        currentSpace = null;
+        updateAccountUi();
+        closeAccountModal();
+        closeSpace();
+        await loadAndRenderSpaces();
+      });
+    }
+
     if (apiKeyBtn) apiKeyBtn.addEventListener('click', openAuthModal);
     if (authCloseBtn) authCloseBtn.addEventListener('click', closeAuthModal);
     document.querySelectorAll('[data-close-auth="true"]').forEach((el) => {
@@ -614,10 +766,11 @@
 
     deleteBtn.addEventListener('click', async function () {
       if (!currentSpace || isDeleting) return;
+      if (!currentSpace.private) { addChatSystemMessage('Public demo labs cannot be deleted.'); return; }
       if (!confirm('Delete lab "' + currentSpace.title + '"? This cannot be undone.')) return;
       isDeleting = true;
       try {
-        const res = await fetch('/api/spaces/' + encodeURIComponent(currentSpace.id), { method: 'DELETE' });
+        const res = await fetch('/api/spaces/' + encodeURIComponent(currentSpace.id), { method: 'DELETE', credentials: 'same-origin' });
         if (!res.ok) throw new Error('Delete failed');
         addChatSystemMessage('Deleted lab "' + currentSpace.title + '".');
         isDeleting = false;
@@ -633,8 +786,10 @@
       const title = prompt('Name your new lab:');
       if (!title || !title.trim()) return;
       try {
+        if (!account) { openAccountModal(); throw new Error('Create a private account first.'); }
         const res = await fetch('/api/spaces', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title: title.trim() }),
         });
@@ -648,7 +803,7 @@
 
     /* ── Load providers & restore auth ──────── */
     function loadProviderCatalog() {
-      return fetch('/api/providers')
+      return fetch('/api/providers', { credentials: 'same-origin' })
         .then((r) => (r.ok ? r.json() : { providers: [] }))
         .then((data) => {
           providerCatalog = Array.isArray(data.providers) ? data.providers : [];
@@ -657,26 +812,31 @@
         .catch(() => { providerCatalog = []; populateProviderOptions(''); });
     }
 
+    // Check if persistent storage is available
+    fetch('/api/health', { credentials: 'same-origin' }).then(r=>r.json()).then(data => {
+      const warn = document.getElementById('volatile-warning');
+      const note = document.getElementById('account-volatile-note');
+      if (!data.persistent) {
+        if (warn) warn.classList.remove('hidden');
+        if (note) note.classList.remove('hidden');
+      }
+    }).catch(() => {});
+
     setApiStatus('locked');
-    loadAndRenderSpaces();
+    updateAccountUi();
+    loadAccount().then(loadAndRenderSpaces);
     loadProviderCatalog();
 
-    // Restore saved auth
+    // Restore saved provider key for this browser session only.
     AiAgent.loadCatalog().then(() => {
       if (authConfig.apiKey && authConfig.provider) {
-        AiAgent.configure({
-          provider: authConfig.provider,
-          modelId: authConfig.modelId,
-          apiKey: authConfig.apiKey,
-          spaceId: currentSpace?.id,
-          spaceTitle: currentSpace?.title,
-        });
+        configureAiForCurrentSpace();
         const p = providerCatalog.find((pr) => pr.id === authConfig.provider);
         setApiStatus('ready', (p?.name || authConfig.provider) + ' / ' + authConfig.modelId);
-        addChatSystemMessage('AI restored from saved session.');
+        addChatSystemMessage('AI restored from browser session.');
       }
     });
 
-    console.log('flabs ready — AI runs in browser');
+    console.log('flabs ready — server-side pi SDK builder');
   });
 })();

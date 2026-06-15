@@ -1,0 +1,30 @@
+[
+  {
+    "name": "flabs repository README and pitch",
+    "url": "../../README.md",
+    "license": "Project-local",
+    "version": "2026-06-14 workspace state",
+    "usage": "Template"
+  },
+  {
+    "name": "flabs vision: curated knowledge engine",
+    "url": "../../plan/vision.md",
+    "license": "Project-local",
+    "version": "2026-06-14 workspace state",
+    "usage": "Template"
+  },
+  {
+    "name": "flabs logo PNG",
+    "url": "assets/flabs_logo.png",
+    "license": "User-provided",
+    "version": "2026-06-14",
+    "usage": "Template"
+  },
+  {
+    "name": "HyperFrames CLI and composition conventions",
+    "url": "https://hyperframes.heygen.com",
+    "license": "Tool documentation",
+    "version": "hyperframes 0.6.97",
+    "usage": "Dependency"
+  }
+]

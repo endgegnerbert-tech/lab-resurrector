@@ -77,11 +77,51 @@ html, body { height: 100%; overflow: hidden; }
   font-size: 0.78rem;
   line-height: 1.45;
 }
-#auth-form {
+#auth-form,
+#account-create-form,
+#account-login-form {
   margin-top: 0.9rem;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+.recovery-code {
+  margin-top: 0.9rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  color: var(--accent2);
+  font-size: 0.78rem;
+}
+
+/* ── Volatile / Demo banner ────────────── */
+#volatile-warning {
+  text-align: center;
+  padding: 0.4rem 1rem;
+  background: rgba(228, 90, 90, 0.12);
+  border-bottom: 1px solid rgba(228, 90, 90, 0.2);
+  font-size: 0.72rem;
+  color: var(--danger);
+  flex-shrink: 0;
+  z-index: 1;
+  position: relative;
+}
+#volatile-badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.45rem;
+  background: rgba(228, 90, 90, 0.12);
+  border: 1px solid rgba(228, 90, 90, 0.2);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  margin-left: 0.5rem;
+  white-space: nowrap;
+}
+.field-note.volatile {
+  color: var(--danger);
+  font-size: 0.72rem;
 }
 .field {
   display: flex;

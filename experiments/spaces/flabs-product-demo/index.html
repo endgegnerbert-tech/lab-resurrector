@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --bg: #0d0d14;
+        --surface: #16161f;
+        --card: #1c1c28;
+        --accent: #7c6cf0;
+        --accent2: #40d9b8;
+        --text: #e2e2ee;
+        --text-dim: #7777aa;
+        --line: #2b2b42;
+        --danger: #ff6b96;
+      }
+
+      html,
+      body {
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background: var(--bg);
+        color: var(--text);
+      }
+
+      body {
+        font-family: system-ui, sans-serif;
+      }
+
+      code,
+      pre,
+      .mono,
+      .metric,
+      .tool-call,
+      .terminal,
+      .data-pill {
+        font-family: monospace;
+      }
+
+      [data-composition-id="main"] {
+        position: relative;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 20% 18%, rgba(124, 108, 240, 0.2), transparent 30%),
+          radial-gradient(circle at 78% 78%, rgba(64, 217, 184, 0.14), transparent 32%),
+          var(--bg);
+      }
+
+      section {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--bg);
+      }
+
+      .scene-content {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: 96px 112px;
+        display: flex;
+        flex-direction: column;
+        gap: 34px;
+        z-index: 2;
+      }
+
+      .scene-bg {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+      }
+
+      .grid-bg {
+        position: absolute;
+        inset: 0;
+        opacity: 0.26;
+        background-image:
+          linear-gradient(rgba(124, 108, 240, 0.14) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(64, 217, 184, 0.09) 1px, transparent 1px);
+        background-size: 80px 80px;
+      }
+
+      .glow {
+        position: absolute;
+        width: 520px;
+        height: 520px;
+        border-radius: 50%;
+        filter: blur(70px);
+        opacity: 0.22;
+      }
+
+      .glow.purple {
+        background: var(--accent);
+      }
+
+      .glow.teal {
+        background: var(--accent2);
+      }
+
+      .kicker {
+        color: var(--accent2);
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      .headline {
+        max-width: 1220px;
+        font-size: 92px;
+        line-height: 0.98;
+        font-weight: 850;
+        letter-spacing: 0;
+      }
+
+      .subhead {
+        max-width: 900px;
+        font-size: 34px;
+        line-height: 1.28;
+        color: var(--text-dim);
+        font-weight: 450;
+      }
+
+      .center {
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .problem-stack {
+        min-height: 610px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 48px;
+      }
+
+      .problem-line {
+        font-size: 64px;
+        line-height: 1.08;
+        font-weight: 850;
+        max-width: 1300px;
+      }
+
+      .problem-line.dim {
+        color: #c8c8dc;
+      }
+
+      .question-line {
+        margin-top: 10px;
+        color: var(--accent2);
+        text-shadow: 0 0 22px rgba(64, 217, 184, 0.55), 0 0 60px rgba(64, 217, 184, 0.28);
+        font-size: 72px;
+        font-weight: 900;
+      }
+
+      .logo-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 26px;
+        height: 100%;
+      }
+
+      .flabs-logo {
+        position: relative;
+        font-size: 168px;
+        line-height: 1;
+        font-weight: 950;
+        letter-spacing: 0;
+        color: var(--text);
+        text-shadow: 0 0 28px rgba(124, 108, 240, 0.65);
+      }
+
+      .logo-mark {
+        color: var(--accent2);
+      }
+
+      .particle-field {
+        position: absolute;
+        width: 760px;
+        height: 390px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        z-index: -1;
+      }
+
+      .particle {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        background: var(--accent2);
+        box-shadow: 0 0 18px currentColor;
+      }
+
+      .concept-main {
+        font-size: 50px;
+        font-weight: 820;
+      }
+
+      .concept-sub {
+        max-width: 980px;
+        color: var(--text-dim);
+        font-size: 30px;
+        line-height: 1.35;
+      }
+
+      .two-col {
+        position: relative;
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 430px;
+        gap: 34px;
+        min-height: 0;
+      }
+
+      .rocket-stage,
+      .wave-stage,
+      .mini-stage {
+        position: relative;
+        min-height: 0;
+        overflow: hidden;
+        border: 1px solid rgba(124, 108, 240, 0.24);
+        border-radius: 8px;
+        background:
+          linear-gradient(180deg, rgba(22, 22, 31, 0.6), rgba(13, 13, 20, 0.95)),
+          var(--surface);
+      }
+
+      .rocket-stage {
+        background:
+          radial-gradient(circle at 70% 18%, rgba(124, 108, 240, 0.24), transparent 24%),
+          linear-gradient(180deg, #101021 0%, #0d0d14 58%, #11111a 58%, #171722 100%);
+      }
+
+      .star {
+        position: absolute;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        background: #d8f8ff;
+        opacity: 0.72;
+      }
+
+      .ground {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 190px;
+        background:
+          linear-gradient(90deg, rgba(64, 217, 184, 0.18), rgba(124, 108, 240, 0.1)),
+          #11111b;
+        border-top: 2px solid rgba(64, 217, 184, 0.45);
+      }
+
+      .launchpad {
+        position: absolute;
+        left: 130px;
+        bottom: 170px;
+        width: 130px;
+        height: 20px;
+        border-radius: 2px;
+        background: #3a3a50;
+        box-shadow: 0 0 24px rgba(64, 217, 184, 0.24);
+      }
+
+      .rocket {
+        position: absolute;
+        left: 168px;
+        bottom: 190px;
+        width: 50px;
+        height: 150px;
+        transform-origin: 50% 90%;
+        will-change: transform;
+      }
+
+      .rocket-body {
+        position: absolute;
+        inset: 0;
+        border-radius: 28px 28px 10px 10px;
+        background: linear-gradient(90deg, #deddf4, #8585b2 46%, #f4f6ff);
+        border: 2px solid rgba(226, 226, 238, 0.7);
+      }
+
+      .rocket-nose {
+        position: absolute;
+        top: -34px;
+        left: 3px;
+        width: 44px;
+        height: 52px;
+        clip-path: polygon(50% 0, 100% 100%, 0 100%);
+        background: var(--accent);
+        filter: drop-shadow(0 0 12px rgba(124, 108, 240, 0.9));
+      }
+
+      .rocket-window {
+        position: absolute;
+        top: 42px;
+        left: 12px;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--accent2);
+        box-shadow: 0 0 18px rgba(64, 217, 184, 0.75);
+      }
+
+      .fin {
+        position: absolute;
+        bottom: 8px;
+        width: 24px;
+        height: 42px;
+        background: var(--accent);
+      }
+
+      .fin.left {
+        left: -16px;
+        clip-path: polygon(100% 0, 100% 100%, 0 100%);
+      }
+
+      .fin.right {
+        right: -16px;
+        clip-path: polygon(0 0, 100% 100%, 0 100%);
+      }
+
+      .flame {
+        position: absolute;
+        left: 15px;
+        bottom: -54px;
+        width: 20px;
+        height: 62px;
+        border-radius: 50% 50% 45% 45%;
+        background: linear-gradient(var(--accent2), #ffffff, var(--accent));
+        filter: blur(1px) drop-shadow(0 0 20px rgba(64, 217, 184, 0.8));
+      }
+
+      .trajectory {
+        position: absolute;
+        inset: 0;
+      }
+
+      .trajectory path {
+        fill: none;
+        stroke: var(--accent2);
+        stroke-width: 5;
+        stroke-linecap: round;
+        stroke-dasharray: 1300;
+        stroke-dashoffset: 1300;
+        filter: drop-shadow(0 0 12px rgba(64, 217, 184, 0.7));
+      }
+
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .panel-title {
+        color: var(--text-dim);
+        font-size: 22px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      .param-card,
+      .data-card,
+      .provider-card,
+      .space-card-demo {
+        border-radius: 8px;
+        border: 1px solid rgba(124, 108, 240, 0.25);
+        background: rgba(28, 28, 40, 0.86);
+        box-shadow: 0 18px 60px rgba(0, 0, 0, 0.22);
+      }
+
+      .param-card {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .param-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        align-items: baseline;
+        font-size: 26px;
+        font-weight: 750;
+      }
+
+      .param-value {
+        color: var(--accent2);
+      }
+
+      .slider {
+        position: relative;
+        height: 10px;
+        border-radius: 999px;
+        background: #2a2a42;
+        overflow: visible;
+      }
+
+      .slider-fill {
+        width: 54%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+      }
+
+      .slider-knob {
+        position: absolute;
+        top: 50%;
+        left: 54%;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--text);
+        box-shadow: 0 0 18px rgba(64, 217, 184, 0.45);
+        transform: translate(-50%, -50%);
+      }
+
+      .rocket-overlay,
+      .wave-overlay,
+      .ai-overlay {
+        position: absolute;
+        left: 54px;
+        bottom: 82px;
+        padding: 18px 24px;
+        border-radius: 8px;
+        background: rgba(13, 13, 20, 0.78);
+        border: 1px solid rgba(64, 217, 184, 0.35);
+        color: var(--accent2);
+        font-size: 34px;
+        font-weight: 820;
+        box-shadow: 0 0 42px rgba(64, 217, 184, 0.18);
+      }
+
+      .chat-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 34px;
+        min-height: 0;
+      }
+
+      .chat-window {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        padding: 28px;
+        border: 1px solid rgba(124, 108, 240, 0.25);
+        border-radius: 8px;
+        background: rgba(22, 22, 31, 0.85);
+        min-height: 0;
+      }
+
+      .message {
+        max-width: 94%;
+        padding: 18px 22px;
+        border-radius: 8px;
+        font-size: 25px;
+        line-height: 1.32;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .message.user {
+        align-self: flex-end;
+        background: rgba(124, 108, 240, 0.16);
+      }
+
+      .message.ai {
+        align-self: flex-start;
+        background: rgba(64, 217, 184, 0.1);
+      }
+
+      .tool-call {
+        align-self: flex-start;
+        padding: 12px 16px;
+        border-radius: 6px;
+        color: var(--accent2);
+        border: 1px solid rgba(64, 217, 184, 0.38);
+        background: rgba(64, 217, 184, 0.08);
+        font-size: 22px;
+      }
+
+      .wave-layout,
+      .build-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 520px;
+        gap: 34px;
+        min-height: 0;
+      }
+
+      .wave-stage {
+        background:
+          radial-gradient(circle at 50% 50%, rgba(64, 217, 184, 0.12), transparent 25%),
+          #0b0b12;
+      }
+
+      .wave-source {
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--accent2);
+        box-shadow: 0 0 26px rgba(64, 217, 184, 0.78);
+      }
+
+      .wave-ring {
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        margin: -46px 0 0 -46px;
+        border: 3px solid rgba(64, 217, 184, 0.72);
+        border-radius: 50%;
+        opacity: 0;
+      }
+
+      .interference-line {
+        position: absolute;
+        height: 3px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, rgba(64, 217, 184, 0.86), transparent);
+        filter: drop-shadow(0 0 10px rgba(64, 217, 184, 0.55));
+        opacity: 0.72;
+      }
+
+      .data-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .data-card {
+        padding: 22px;
+      }
+
+      .data-label {
+        color: #aaaad0;
+        font-size: 18px;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+
+      .metric {
+        margin-top: 10px;
+        color: var(--accent2);
+        font-size: 38px;
+        font-weight: 800;
+      }
+
+      .provider-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .provider-card {
+        height: 118px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        font-weight: 850;
+        transform-style: preserve-3d;
+      }
+
+      .terminal {
+        min-height: 0;
+        padding: 28px;
+        border: 1px solid rgba(64, 217, 184, 0.25);
+        border-radius: 8px;
+        background: rgba(7, 7, 12, 0.88);
+        font-size: 25px;
+        line-height: 1.45;
+        color: #c8f7eb;
+      }
+
+      .cursor {
+        display: inline-block;
+        width: 13px;
+        height: 26px;
+        margin-left: 4px;
+        background: var(--accent2);
+        vertical-align: -4px;
+      }
+
+      .space-cards-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+        margin-top: 20px;
+      }
+
+      .space-card-demo {
+        height: 150px;
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .space-card-demo strong {
+        font-size: 24px;
+      }
+
+      .data-pill {
+        width: max-content;
+        max-width: 100%;
+        color: var(--accent2);
+        font-size: 15px;
+        border-radius: 999px;
+        padding: 7px 10px;
+        background: rgba(64, 217, 184, 0.1);
+      }
+
+      .final-grid {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 36px;
+        min-height: 0;
+        align-items: center;
+      }
+
+      .final-card {
+        min-height: 470px;
+        border: 1px solid rgba(124, 108, 240, 0.28);
+        border-radius: 8px;
+        background: rgba(22, 22, 31, 0.82);
+        padding: 42px;
+      }
+
+      .final-card h3 {
+        font-size: 38px;
+        margin-bottom: 22px;
+      }
+
+      .final-card p {
+        color: var(--text-dim);
+        font-size: 26px;
+        line-height: 1.35;
+      }
+
+      .architecture {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .arch-node {
+        padding: 18px 22px;
+        border: 1px solid rgba(64, 217, 184, 0.24);
+        border-radius: 8px;
+        background: rgba(64, 217, 184, 0.07);
+        font-size: 25px;
+        font-weight: 760;
+      }
+
+      .arrow {
+        color: var(--accent2);
+        font-size: 24px;
+        text-align: center;
+      }
+
+      .cta {
+        color: var(--accent2);
+        font-size: 74px;
+        line-height: 1;
+        font-weight: 950;
+        text-shadow: 0 0 30px rgba(64, 217, 184, 0.45);
+      }
+
+      .vision-layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 36px;
+        min-height: 0;
+        align-items: stretch;
+      }
+
+      .vision-list {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 24px;
+      }
+
+      .vision-item {
+        padding: 26px 30px;
+        border-radius: 8px;
+        border: 1px solid rgba(64, 217, 184, 0.24);
+        background: rgba(64, 217, 184, 0.075);
+        font-size: 34px;
+        line-height: 1.08;
+        font-weight: 900;
+        letter-spacing: 0;
+      }
+
+      .vision-item span {
+        display: block;
+        margin-top: 10px;
+        color: #b8b8dc;
+        font-size: 20px;
+        font-weight: 650;
+      }
+
+      .vision-engine {
+        position: relative;
+        border-radius: 8px;
+        border: 1px solid rgba(124, 108, 240, 0.32);
+        background: rgba(12, 12, 20, 0.86);
+        overflow: hidden;
+        padding: 38px;
+      }
+
+      .engine-core {
+        position: absolute;
+        width: 260px;
+        height: 260px;
+        left: 50%;
+        top: 50%;
+        margin-left: -130px;
+        margin-top: -130px;
+        border-radius: 50%;
+        border: 2px solid rgba(64, 217, 184, 0.72);
+        background: radial-gradient(circle, rgba(64, 217, 184, 0.28), rgba(124, 108, 240, 0.2) 58%, transparent 62%);
+        box-shadow: 0 0 64px rgba(64, 217, 184, 0.24);
+      }
+
+      .engine-ring {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        border: 1px solid rgba(124, 108, 240, 0.45);
+        transform: translate(-50%, -50%);
+      }
+
+      .ring-1 { width: 410px; height: 410px; }
+      .ring-2 { width: 570px; height: 570px; }
+      .ring-3 { width: 730px; height: 730px; }
+
+      .engine-label {
+        position: absolute;
+        padding: 14px 18px;
+        border-radius: 6px;
+        background: rgba(28, 28, 40, 0.92);
+        border: 1px solid rgba(124, 108, 240, 0.28);
+        color: var(--text);
+        font-size: 26px;
+        font-weight: 900;
+        text-transform: uppercase;
+      }
+
+      .knowledge-beam {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        width: 640px;
+        height: 4px;
+        margin-left: -320px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, transparent, rgba(64, 217, 184, 0.95), transparent);
+        filter: drop-shadow(0 0 16px rgba(64, 217, 184, 0.85));
+        transform-origin: 50% 50%;
+      }
+
+      .beam-2 { transform: rotate(60deg); }
+      .beam-3 { transform: rotate(120deg); }
+
+      .vision-punch {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 340px;
+        text-align: center;
+        color: var(--accent2);
+        font-size: 42px;
+        line-height: 0.95;
+        font-weight: 950;
+        text-shadow: 0 0 30px rgba(64, 217, 184, 0.5);
+      }
+
+      .final-image-wrap {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 30px;
+        min-height: 0;
+      }
+
+      .final-image-card {
+        width: 520px;
+        height: 520px;
+        border-radius: 8px;
+        border: 0;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-dim);
+        font-size: 34px;
+        text-align: center;
+        padding: 0;
+      }
+
+      .final-image-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        border-radius: 6px;
+      }
+
+      .final-tagline {
+        max-width: 1050px;
+        color: var(--text);
+        font-size: 70px;
+        line-height: 0.98;
+        font-weight: 950;
+        text-align: center;
+      }
+
+      .final-subline {
+        color: var(--accent2);
+        font-size: 32px;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .transition-wipe {
+        position: absolute;
+        width: 100px;
+        height: 100px;
+        left: 50%;
+        top: 50%;
+        border-radius: 50%;
+        background: radial-gradient(circle, var(--accent2), var(--accent) 58%, #0d0d14 70%);
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      .topbar {
+        position: absolute;
+        left: 112px;
+        right: 112px;
+        top: 44px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 4;
+        color: var(--text-dim);
+        font-size: 18px;
+      }
+
+      .brand-mini {
+        color: var(--text);
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .brand-mini span {
+        color: var(--accent2);
+      }
+    </style>
+  </head>
+  <body>
+    <div data-hf-id="hf-4yid" id="root" data-composition-id="main" data-start="0" data-duration="112" data-width="1920" data-height="1080" data-background-music="electronic-lo-fi">
+      <div data-hf-id="hf-6gsc" id="transition-wipe" class="transition-wipe"></div>
+
+      <section data-hf-id="hf-0u3q" id="shot-1" class="clip" data-start="0" data-duration="12" data-track-index="1">
+        <div data-hf-id="hf-8rns" class="scene-bg">
+          <div data-hf-id="hf-q4u8" class="grid-bg"></div>
+          <div data-hf-id="hf-tppi" class="glow purple" style="left: 120px; top: 90px"></div>
+          <div data-hf-id="hf-r6gn" class="glow teal" style="right: 80px; bottom: 20px"></div>
+        </div>
+        <div data-hf-id="hf-viw3" class="scene-content center">
+          <div data-hf-id="hf-1m8q" class="problem-stack">
+            <div data-hf-id="hf-gpii" class="problem-line s1-line-1">9/10 schools have no physics lab</div>
+            <div data-hf-id="hf-zoc9" class="problem-line dim s1-line-2">A real lab costs &gt;$5,000</div>
+            <div data-hf-id="hf-g99z" class="problem-line dim s1-line-3">85% of students have a phone</div>
+            <div data-hf-id="hf-nxpe" class="question-line s1-question">What if the phone was the lab?</div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-rr0a" id="shot-2" class="clip" data-start="12" data-duration="10" data-track-index="1">
+        <div data-hf-id="hf-mhds" class="scene-bg">
+          <div data-hf-id="hf-wbnc" class="grid-bg"></div>
+          <div data-hf-id="hf-4jvo" class="glow purple" style="left: 610px; top: 210px"></div>
+          <div data-hf-id="hf-5wdc" class="glow teal" style="right: 520px; top: 420px"></div>
+        </div>
+        <div data-hf-id="hf-8qjn" class="scene-content center">
+          <div data-hf-id="hf-bt52" class="logo-wrap">
+            <div data-hf-id="hf-9wst" class="particle-field">
+              <i data-hf-id="hf-0yd3" class="particle p1"></i><i data-hf-id="hf-sah8" class="particle p2"></i><i data-hf-id="hf-t251" class="particle p3"></i>
+              <i data-hf-id="hf-btuq" class="particle p4"></i><i data-hf-id="hf-fryr" class="particle p5"></i><i data-hf-id="hf-742w" class="particle p6"></i>
+              <i data-hf-id="hf-7vqp" class="particle p7"></i><i data-hf-id="hf-5kni" class="particle p8"></i><i data-hf-id="hf-9irj" class="particle p9"></i>
+              <i data-hf-id="hf-c9rx" class="particle p10"></i><i data-hf-id="hf-bi44" class="particle p11"></i><i data-hf-id="hf-k5zz" class="particle p12"></i>
+            </div>
+            <div data-hf-id="hf-upza" class="flabs-logo"><span data-hf-id="hf-u1s8" class="logo-mark">f</span>labs</div>
+            <div data-hf-id="hf-h5wm" class="concept-main">Browser + AI = Interactive Physics Lab</div>
+            <div data-hf-id="hf-egxx" class="concept-sub">AI controls the simulation. You explore the physics.</div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-o4vs" id="shot-3" class="clip" data-start="22" data-duration="18" data-track-index="1">
+        <div data-hf-id="hf-mndw" class="topbar"><div data-hf-id="hf-9wpp" class="brand-mini"><span data-hf-id="hf-wptx">f</span>labs</div><div data-hf-id="hf-ge1d" class="mono">space: water-rocket</div></div>
+        <div data-hf-id="hf-acly" class="scene-content" style="padding-top: 92px">
+          <div data-hf-id="hf-yeow">
+            <div data-hf-id="hf-52q1" class="kicker">Live Lab 01</div>
+            <div data-hf-id="hf-2ggi" class="headline" style="font-size: 58px">Water Rocket: pressure becomes motion</div>
+          </div>
+          <div data-hf-id="hf-ujor" class="two-col">
+            <div data-hf-id="hf-m3f8" class="rocket-stage" data-layout-allow-overflow="">
+              <div data-hf-id="hf-vppq" class="star" style="left: 170px; top: 90px"></div>
+              <div data-hf-id="hf-vnfx" class="star" style="left: 410px; top: 140px"></div>
+              <div data-hf-id="hf-1ejz" class="star" style="left: 720px; top: 70px"></div>
+              <div data-hf-id="hf-n01c" class="star" style="left: 980px; top: 190px"></div>
+              <svg data-hf-id="hf-ao83" class="trajectory" viewBox="0 0 1180 760" aria-hidden="true">
+                <path data-hf-id="hf-s0w3" class="arc arc-low" d="M190 590 C385 290, 670 270, 1030 570" />
+                <path data-hf-id="hf-z8qn" class="arc arc-high" d="M190 590 C430 110, 770 90, 1100 560" />
+              </svg>
+              <div data-hf-id="hf-fjfm" class="rocket rocket-main">
+                <div data-hf-id="hf-e7wo" class="rocket-nose"></div>
+                <div data-hf-id="hf-sa25" class="rocket-body"></div>
+                <div data-hf-id="hf-uh7x" class="rocket-window"></div>
+                <div data-hf-id="hf-51wi" class="fin left"></div>
+                <div data-hf-id="hf-5wep" class="fin right"></div>
+                <div data-hf-id="hf-559t" class="flame"></div>
+              </div>
+              <div data-hf-id="hf-izq4" class="launchpad"></div>
+              <div data-hf-id="hf-ygft" class="ground"></div>
+            </div>
+            <div data-hf-id="hf-9etu" class="rocket-overlay" data-layout-ignore="">Real physics. Real-time feedback.</div>
+            <div data-hf-id="hf-kbo7" class="right-panel">
+              <div data-hf-id="hf-3rdz" class="panel-title">Parameters</div>
+              <div data-hf-id="hf-bisj" class="param-card param-pressure">
+                <div data-hf-id="hf-71k8" class="param-row"><span data-hf-id="hf-itk6">Pressure</span><span data-hf-id="hf-fl0z" class="param-value pressure-value">3 bar</span></div>
+                <div data-hf-id="hf-zhhr" class="slider"><div data-hf-id="hf-j1ju" class="slider-fill pressure-fill"></div><div data-hf-id="hf-2xpi" class="slider-knob pressure-knob"></div></div>
+              </div>
+              <div data-hf-id="hf-v40j" class="param-card param-water">
+                <div data-hf-id="hf-7xy8" class="param-row"><span data-hf-id="hf-ctak">Water</span><span data-hf-id="hf-5hr6" class="param-value">30%</span></div>
+                <div data-hf-id="hf-57xr" class="slider"><div data-hf-id="hf-rsu5" class="slider-fill" style="width: 30%"></div><div data-hf-id="hf-otyl" class="slider-knob" style="left: 30%"></div></div>
+              </div>
+              <div data-hf-id="hf-8ynb" class="param-card param-angle">
+                <div data-hf-id="hf-6r15" class="param-row"><span data-hf-id="hf-qh1o">Angle</span><span data-hf-id="hf-5ghf" class="param-value">45 deg</span></div>
+                <div data-hf-id="hf-4tmq" class="slider"><div data-hf-id="hf-f6xk" class="slider-fill" style="width: 55%"></div><div data-hf-id="hf-zbew" class="slider-knob" style="left: 55%"></div></div>
+              </div>
+              <div data-hf-id="hf-8rc3" class="data-card">
+                <div data-hf-id="hf-p8fg" class="data-label">Flight telemetry</div>
+                <div data-hf-id="hf-9nqm" class="metric height-metric">18.4 m</div>
+                <div data-hf-id="hf-phrn" class="data-label" style="margin-top: 14px">Range estimate</div>
+                <div data-hf-id="hf-kv4s" class="metric range-metric">41.2 m</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-5mkl" id="shot-4" class="clip" data-start="40" data-duration="12" data-track-index="1">
+        <div data-hf-id="hf-lagp" class="scene-bg"><div data-hf-id="hf-v4q9" class="grid-bg"></div></div>
+        <div data-hf-id="hf-cn5c" class="scene-content">
+          <div data-hf-id="hf-y7yw">
+            <div data-hf-id="hf-cdlo" class="kicker">AI Lab Partner</div>
+            <div data-hf-id="hf-nnp1" class="headline" style="font-size: 62px">The agent does not just answer. It acts.</div>
+          </div>
+          <div data-hf-id="hf-9scp" class="chat-layout">
+            <div data-hf-id="hf-4grn" class="chat-window">
+              <div data-hf-id="hf-lpmf" class="message user chat-1">What if I launch at 60 deg?</div>
+              <div data-hf-id="hf-upmq" class="message ai chat-2">60 deg reduces range by 13% but increases height by 22%. Want to try?</div>
+              <div data-hf-id="hf-ed4i" class="message user chat-3">Yes!</div>
+              <div data-hf-id="hf-mc5e" class="message ai chat-4">Setting angle to 60 deg...</div>
+              <div data-hf-id="hf-x69s" class="tool-call chat-tool">set_param -&gt; angle: 60</div>
+              <div data-hf-id="hf-va8l" class="ai-overlay">AI as lab partner, not just a chatbot</div>
+            </div>
+            <div data-hf-id="hf-6y3k" class="mini-stage">
+              <svg data-hf-id="hf-2z3r" class="trajectory" viewBox="0 0 900 680" aria-hidden="true">
+                <path data-hf-id="hf-s14w" class="arc chat-arc" d="M135 530 C350 80, 610 125, 790 530" />
+              </svg>
+              <div data-hf-id="hf-oqj4" class="rocket rocket-chat" style="left: 120px; bottom: 170px; transform: rotate(15deg)">
+                <div data-hf-id="hf-zaps" class="rocket-nose"></div>
+                <div data-hf-id="hf-mnc1" class="rocket-body"></div>
+                <div data-hf-id="hf-ygrl" class="rocket-window"></div>
+                <div data-hf-id="hf-acw6" class="fin left"></div>
+                <div data-hf-id="hf-7oat" class="fin right"></div>
+                <div data-hf-id="hf-32ed" class="flame"></div>
+              </div>
+              <div data-hf-id="hf-p66l" class="ground"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-a5af" id="shot-5" class="clip" data-start="52" data-duration="12" data-track-index="1">
+        <div data-hf-id="hf-o0eg" class="scene-content">
+          <div data-hf-id="hf-x11t">
+            <div data-hf-id="hf-69n4" class="kicker">Live Lab 02</div>
+            <div data-hf-id="hf-0uo8" class="headline" style="font-size: 62px">Wave Interference: superposition live</div>
+          </div>
+          <div data-hf-id="hf-wp5i" class="wave-layout">
+            <div data-hf-id="hf-wjbi" class="wave-stage">
+              <div data-hf-id="hf-idgm" class="wave-source" style="left: 38%; top: 50%"></div>
+              <div data-hf-id="hf-6hf5" class="wave-source" style="left: 62%; top: 50%"></div>
+              <div data-hf-id="hf-md5n" class="wave-ring wr1" style="left: 38%; top: 50%"></div>
+              <div data-hf-id="hf-ck0c" class="wave-ring wr2" style="left: 38%; top: 50%"></div>
+              <div data-hf-id="hf-rn7x" class="wave-ring wr3" style="left: 38%; top: 50%"></div>
+              <div data-hf-id="hf-21sp" class="wave-ring wr4" style="left: 62%; top: 50%"></div>
+              <div data-hf-id="hf-vb9g" class="wave-ring wr5" style="left: 62%; top: 50%"></div>
+              <div data-hf-id="hf-q2en" class="wave-ring wr6" style="left: 62%; top: 50%"></div>
+              <div data-hf-id="hf-ayuh" class="interference-line il1" style="left: 12%; top: 32%; width: 76%; transform: rotate(12deg)"></div>
+              <div data-hf-id="hf-2sfh" class="interference-line il2" style="left: 10%; top: 52%; width: 80%; transform: rotate(-8deg)"></div>
+              <div data-hf-id="hf-bupz" class="interference-line il3" style="left: 18%; top: 68%; width: 64%; transform: rotate(18deg)"></div>
+              <div data-hf-id="hf-0x53" class="wave-overlay">Wave Interference: superposition live</div>
+            </div>
+            <div data-hf-id="hf-hi65" class="data-panel">
+              <div data-hf-id="hf-3v2x" class="param-card wave-slider">
+                <div data-hf-id="hf-75c6" class="param-row"><span data-hf-id="hf-iapg">Wavelength</span><span data-hf-id="hf-6w9b" class="param-value wave-value">80</span></div>
+                <div data-hf-id="hf-4fbp" class="slider"><div data-hf-id="hf-fr8d" class="slider-fill wave-fill" style="width: 42%"></div><div data-hf-id="hf-6hg0" class="slider-knob wave-knob" style="left: 42%"></div></div>
+              </div>
+              <div data-hf-id="hf-jpsz" class="data-card">
+                <div data-hf-id="hf-tk10" class="data-label">Max amplitude</div>
+                <div data-hf-id="hf-z85k" class="metric amp-metric">1.8</div>
+              </div>
+              <div data-hf-id="hf-jbhy" class="data-card">
+                <div data-hf-id="hf-w4jm" class="data-label">Nodes</div>
+                <div data-hf-id="hf-8raq" class="metric node-metric">7</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-5tpt" id="shot-6" class="clip" data-start="64" data-duration="12" data-track-index="1">
+        <div data-hf-id="hf-lorq" class="scene-bg"><div data-hf-id="hf-vj1a" class="grid-bg"></div></div>
+        <div data-hf-id="hf-mthd" class="scene-content">
+          <div data-hf-id="hf-xfcu">
+            <div data-hf-id="hf-yeiy" class="kicker">Bring Your Own AI + Spaces</div>
+            <div data-hf-id="hf-2rla" class="headline" style="font-size: 62px">Type an idea. The agent builds a lab space.</div>
+          </div>
+          <div data-hf-id="hf-3e2n" class="build-layout">
+            <div data-hf-id="hf-w8fr">
+              <div data-hf-id="hf-1ms0" class="terminal">
+                <span data-hf-id="hf-ia3b" class="typed-line typed-1">student: build a pendulum lab with energy data</span><span data-hf-id="hf-1edb" class="cursor"></span>
+                <div data-hf-id="hf-sf6d" class="typed-line typed-2">agent: checking local formulas...</div>
+                <div data-hf-id="hf-p1rs" class="typed-line typed-3">tool: physics_model_plan -&gt; simple harmonic motion</div>
+                <div data-hf-id="hf-83gz" class="typed-line typed-4">tool: space_write_current_file -&gt; sketch.js</div>
+                <div data-hf-id="hf-hna0" class="typed-line typed-5">tool: space_verify_current -&gt; passed</div>
+              </div>
+              <div data-hf-id="hf-c9sf" class="space-cards-row">
+                <div data-hf-id="hf-ga60" class="space-card-demo build-card-1"><strong data-hf-id="hf-0ezu">Rocket</strong><span data-hf-id="hf-jupv" class="data-pill">pressure, range, thrust</span></div>
+                <div data-hf-id="hf-r5nn" class="space-card-demo build-card-2"><strong data-hf-id="hf-mj54">Waves</strong><span data-hf-id="hf-2me1" class="data-pill">nodes, amplitude</span></div>
+                <div data-hf-id="hf-kzxu" class="space-card-demo build-card-3"><strong data-hf-id="hf-mczs">Pendulum</strong><span data-hf-id="hf-kbnu" class="data-pill">energy, period</span></div>
+              </div>
+            </div>
+            <div data-hf-id="hf-wmqs">
+              <div data-hf-id="hf-721c" class="provider-grid">
+                <div data-hf-id="hf-ap51" class="provider-card provider-1">DeepSeek</div>
+                <div data-hf-id="hf-98ja" class="provider-card provider-2">Claude</div>
+                <div data-hf-id="hf-hcs8" class="provider-card provider-3">Groq</div>
+                <div data-hf-id="hf-62ok" class="provider-card provider-4">Ollama</div>
+              </div>
+              <pre data-hf-id="hf-4cds" class="terminal" style="margin-top: 18px; min-height: 230px">model:
+  provider: pi
+  user_choice: true
+  tools:
+    - sim_set_param
+    - source_search
+    - physics_model_plan</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-jdy1" id="shot-7" class="clip" data-start="76" data-duration="14" data-track-index="1">
+        <div data-hf-id="hf-khun" class="scene-bg">
+          <div data-hf-id="hf-uc47" class="grid-bg"></div>
+          <div data-hf-id="hf-z1a5" class="glow purple" style="left: 90px; bottom: 80px"></div>
+          <div data-hf-id="hf-4gvj" class="glow teal" style="right: 90px; top: 120px"></div>
+        </div>
+        <div data-hf-id="hf-n7se" class="scene-content">
+          <div data-hf-id="hf-vftp">
+            <div data-hf-id="hf-0057" class="kicker">Hackathon Demo</div>
+            <div data-hf-id="hf-5xf3" class="headline">A physics lab in every pocket.</div>
+            <div data-hf-id="hf-ygpi" class="subhead">Browser simulations, AI-controlled experiments, local sources, live data, and model choice without vendor lock-in.</div>
+          </div>
+          <div data-hf-id="hf-0uvd" class="final-grid">
+            <div data-hf-id="hf-uza8" class="final-card architecture">
+              <div data-hf-id="hf-4gnd" class="arch-node">Browser: Canvas spaces + chat</div>
+              <div data-hf-id="hf-947g" class="arrow">down via WebSocket</div>
+              <div data-hf-id="hf-1jw6" class="arch-node">Node.js server + pi Agent</div>
+              <div data-hf-id="hf-4c73" class="arrow">down via safe tools</div>
+              <div data-hf-id="hf-fsai" class="arch-node">sim_set_param + source_search + emet</div>
+            </div>
+            <div data-hf-id="hf-i4nn" class="final-card">
+              <h3 data-hf-id="hf-88y2">flabs</h3>
+              <p data-hf-id="hf-4j4n">Students predict, test, and reflect. The AI changes the experiment live, then explains the physics with measurements on screen.</p>
+              <div data-hf-id="hf-ggp7" class="cta" style="margin-top: 54px">Open the lab.</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-53ii" id="shot-8" class="clip" data-start="90" data-duration="14" data-track-index="1">
+        <div data-hf-id="hf-kw5o" class="scene-bg">
+          <div data-hf-id="hf-uqf8" class="grid-bg"></div>
+          <div data-hf-id="hf-5fml" class="glow purple" style="left: 120px; top: 110px"></div>
+          <div data-hf-id="hf-zkzl" class="glow teal" style="right: 90px; bottom: 90px"></div>
+        </div>
+        <div data-hf-id="hf-m0vb" class="scene-content">
+          <div data-hf-id="hf-vu4q">
+            <div data-hf-id="hf-3ffm" class="kicker">The Vision</div>
+            <div data-hf-id="hf-gf20" class="headline" style="font-size: 78px">The lab learns from every experiment.</div>
+            <div data-hf-id="hf-p57a" class="subhead">flabs becomes a living knowledge engine: sources, formulas, measurements, and student discoveries all feed the next lab.</div>
+          </div>
+          <div data-hf-id="hf-7ylr" class="vision-layout">
+            <div data-hf-id="hf-ra5x" class="vision-list">
+              <div data-hf-id="hf-jpkv" class="vision-item vision-1">Curiosity becomes a lab.<span data-hf-id="hf-yc9a">prompt -&gt; formulas -&gt; verified space</span></div>
+              <div data-hf-id="hf-oba0" class="vision-item vision-2">Measurements become memory.<span data-hf-id="hf-3qy8">every run teaches the next one</span></div>
+              <div data-hf-id="hf-zf93" class="vision-item vision-3">AI becomes a real partner.<span data-hf-id="hf-1jn2">suggests, tests, explains, improves</span></div>
+            </div>
+            <div data-hf-id="hf-brtf" class="vision-engine" data-layout-allow-overflow="">
+              <div data-hf-id="hf-frv7" class="knowledge-beam beam-1"></div>
+              <div data-hf-id="hf-73zc" class="knowledge-beam beam-2"></div>
+              <div data-hf-id="hf-7vn5" class="knowledge-beam beam-3"></div>
+              <div data-hf-id="hf-k7gf" class="engine-ring ring-1"></div>
+              <div data-hf-id="hf-bjkk" class="engine-ring ring-2"></div>
+              <div data-hf-id="hf-cb8d" class="engine-ring ring-3"></div>
+              <div data-hf-id="hf-yl42" class="engine-core"></div>
+              <div data-hf-id="hf-kh0c" class="vision-punch">CURATED<br data-hf-id="hf-x5px">MEMORY</div>
+              <div data-hf-id="hf-ajtz" class="engine-label" style="left: 54px; top: 62px">sources</div>
+              <div data-hf-id="hf-ut3h" class="engine-label" style="right: 54px; top: 98px">formulas</div>
+              <div data-hf-id="hf-yvx8" class="engine-label" style="left: 88px; bottom: 92px">data</div>
+              <div data-hf-id="hf-tns8" class="engine-label" style="right: 86px; bottom: 62px">spaces</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section data-hf-id="hf-it44" id="shot-9" class="clip" data-start="104" data-duration="8" data-track-index="1">
+        <div data-hf-id="hf-jp8l" class="scene-bg">
+          <div data-hf-id="hf-tji5" class="grid-bg"></div>
+          <div data-hf-id="hf-xo4i" class="glow teal" style="left: 260px; bottom: 80px"></div>
+          <div data-hf-id="hf-obsz" class="glow purple" style="right: 210px; top: 120px"></div>
+        </div>
+        <div data-hf-id="hf-8c8m" class="scene-content center">
+          <div data-hf-id="hf-hck4" class="kicker final-image-kicker">flabs</div>
+          <div data-hf-id="hf-uqzt" class="final-image-wrap">
+            <div data-hf-id="hf-osv5" class="final-image-card final-image-placeholder"><img data-hf-id="hf-3f0c" src="assets/flabs_logo.png" alt="flabs logo"></div>
+            <div data-hf-id="hf-f9nt" class="final-tagline">Every student gets a physics lab.</div>
+            <div data-hf-id="hf-de30" class="final-subline">AI Virtual Physics Lab</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      window.__timelines = window.__timelines || {};
+      const tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+
+      gsap.set(".s1-line-1,.s1-line-2,.s1-line-3,.s1-question", { opacity: 0 });
+      gsap.set(".flabs-logo,.concept-main,.concept-sub,.particle", { opacity: 0 });
+      gsap.set(".param-card,.data-card,.rocket-overlay,.ai-overlay,.wave-overlay", { opacity: 0 });
+      gsap.set(".chat-1,.chat-2,.chat-3,.chat-4,.chat-tool", { opacity: 0 });
+      gsap.set(".provider-card,.typed-line,.build-card-1,.build-card-2,.build-card-3", { opacity: 0 });
+      gsap.set(".final-card,.arch-node,.arrow,.cta", { opacity: 0 });
+      gsap.set(".vision-item,.vision-engine,.engine-core,.engine-ring,.engine-label,.knowledge-beam,.vision-punch,.final-image-kicker,.final-image-card,.final-tagline,.final-subline", { opacity: 0 });
+      gsap.set(".arc-high,.chat-arc", { strokeDashoffset: 1300 });
+      gsap.set(".arc-low", { strokeDashoffset: 1300 });
+
+      const wipeAt = (time) => {
+        tl.fromTo(".transition-wipe", { xPercent: -50, yPercent: -50, scale: 0, opacity: 0.95 }, { xPercent: -50, yPercent: -50, scale: 34, duration: 0.52, ease: "power4.in" }, time);
+        tl.to(".transition-wipe", { opacity: 0, duration: 0.28, ease: "power2.out" }, time + 0.52);
+        tl.set(".transition-wipe", { scale: 0 }, time + 0.82);
+      };
+
+      tl.fromTo(".s1-line-1", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.75 }, 0.7);
+      tl.fromTo(".s1-line-2", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.75 }, 4);
+      tl.fromTo(".s1-line-3", { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.75 }, 8);
+      tl.fromTo(".s1-question", { opacity: 0, y: 34, scale: 0.9 }, { opacity: 1, y: 0, scale: 1, duration: 0.9, ease: "back.out(1.5)" }, 10);
+      tl.to(".glow", { scale: 1.08, duration: 3, repeat: 29, yoyo: true, ease: "sine.inOut" }, 0);
+      wipeAt(11.45);
+
+      const particleTargets = [
+        [-330, -120], [-245, 92], [-162, -168], [-86, 130], [0, -190], [72, 162],
+        [148, -130], [222, 98], [318, -80], [350, 140], [-360, 42], [26, 208]
+      ];
+      particleTargets.forEach((point, i) => {
+        tl.fromTo(`.p${i + 1}`, { opacity: 0, x: 0, y: 0, scale: 0.4 }, { opacity: 1, x: point[0], y: point[1], scale: 1, duration: 0.8, ease: "back.out(1.8)" }, 12.25 + i * 0.04);
+      });
+      tl.fromTo(".flabs-logo", { opacity: 0, scale: 0.82, y: 28 }, { opacity: 1, scale: 1, y: 0, duration: 0.86, ease: "back.out(1.4)" }, 12.5);
+      tl.fromTo(".concept-main", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.72 }, 13.5);
+      tl.fromTo(".concept-sub", { opacity: 0, y: 70 }, { opacity: 1, y: 0, duration: 0.72 }, 14.2);
+      tl.to(".particle", { scale: 1.35, duration: 1.6, repeat: 5, yoyo: true, stagger: { amount: 0.6, from: "center" }, ease: "sine.inOut" }, 14.4);
+      wipeAt(21.45);
+
+      tl.from("#shot-3 .kicker", { opacity: 0, y: 34, duration: 0.55 }, 22.2);
+      tl.from("#shot-3 .headline", { opacity: 0, y: 42, duration: 0.65 }, 22.4);
+      tl.from(".rocket-stage", { opacity: 0, y: 44, scale: 0.98, duration: 0.7 }, 22.7);
+      tl.from(".right-panel .panel-title", { opacity: 0, x: 44, duration: 0.55 }, 23.0);
+      tl.fromTo(".param-pressure", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.55 }, 23.2);
+      tl.fromTo(".param-water", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.55 }, 23.45);
+      tl.fromTo(".param-angle", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.55 }, 23.7);
+      tl.fromTo("#shot-3 .data-card", { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.55 }, 23.95);
+      tl.from(".rocket-main", { y: 24, rotation: -8, opacity: 0, duration: 0.6 }, 24.1);
+      tl.to(".arc-low", { strokeDashoffset: 0, duration: 2.3, ease: "power2.inOut" }, 24.4);
+      tl.fromTo(".rocket-main", { x: 0, y: 0, rotation: -8 }, { x: 585, y: -300, rotation: 48, duration: 2.3, ease: "power2.out" }, 24.75);
+      tl.to(".rocket-main", { x: 820, y: -8, rotation: 88, duration: 1.6, ease: "power2.in" }, 27.05);
+      tl.to(".pressure-fill", { width: "86%", duration: 0.72, ease: "power2.inOut" }, 30);
+      tl.to(".pressure-knob", { left: "86%", duration: 0.72, ease: "power2.inOut" }, 30);
+      tl.to(".pressure-value", { color: "#ffffff", duration: 0.2, yoyo: true, repeat: 3 }, 30);
+      tl.to(".height-metric", { innerText: 32.6, snap: { innerText: 0.1 }, duration: 0.7 }, 30.1);
+      tl.to(".range-metric", { innerText: 58.9, snap: { innerText: 0.1 }, duration: 0.7 }, 30.1);
+      tl.to(".arc-high", { strokeDashoffset: 0, duration: 2.2, ease: "power2.inOut" }, 30.7);
+      tl.fromTo(".rocket-main", { x: 0, y: 0, rotation: -8 }, { x: 690, y: -455, rotation: 43, duration: 2.2, ease: "power2.out" }, 30.8);
+      tl.to(".rocket-main", { x: 820, y: -20, rotation: 90, duration: 1.5, ease: "power2.in" }, 33.0);
+      tl.fromTo(".rocket-overlay", { opacity: 0, y: 28, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.65 }, 32);
+      wipeAt(39.45);
+
+      tl.from("#shot-4 .kicker", { opacity: 0, y: 34, duration: 0.5 }, 40.2);
+      tl.from("#shot-4 .headline", { opacity: 0, y: 40, duration: 0.6 }, 40.4);
+      tl.from(".chat-window", { opacity: 0, x: -54, duration: 0.7 }, 40.8);
+      tl.from(".mini-stage", { opacity: 0, x: 54, duration: 0.7 }, 40.9);
+      tl.fromTo(".chat-1", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.42 }, 41.3);
+      tl.fromTo(".chat-2", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.42 }, 42.5);
+      tl.fromTo(".chat-3", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.42 }, 44.0);
+      tl.fromTo(".chat-4", { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 0.42 }, 45.0);
+      tl.fromTo(".chat-tool", { opacity: 0, y: 22, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.5 }, 45.65);
+      tl.to(".chat-arc", { strokeDashoffset: 0, duration: 1.8, ease: "power2.inOut" }, 46.1);
+      tl.fromTo(".rocket-chat", { x: 0, y: 0, rotation: 15 }, { x: 365, y: -385, rotation: 56, duration: 1.8, ease: "power2.out" }, 46.15);
+      tl.to(".rocket-chat", { x: 610, y: -10, rotation: 92, duration: 1.35, ease: "power2.in" }, 47.95);
+      tl.fromTo(".ai-overlay", { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 0.55 }, 48.2);
+      wipeAt(51.45);
+
+      tl.from("#shot-5 .kicker", { opacity: 0, y: 34, duration: 0.5 }, 52.2);
+      tl.from("#shot-5 .headline", { opacity: 0, y: 40, duration: 0.6 }, 52.4);
+      tl.from(".wave-stage", { opacity: 0, scale: 0.98, y: 38, duration: 0.7 }, 52.8);
+      tl.from(".data-panel", { opacity: 0, x: 54, duration: 0.7 }, 53.0);
+      tl.from(".wave-source", { opacity: 0, scale: 0.2, duration: 0.45, stagger: 0.12 }, 53.35);
+      tl.from(".interference-line", { opacity: 0, scaleX: 0.25, duration: 0.7, stagger: 0.12 }, 54);
+      tl.fromTo(".wave-ring", { opacity: 0.7, scale: 0.25 }, { opacity: 0, scale: 5.5, duration: 2.2, stagger: 0.28, repeat: 3, ease: "sine.out" }, 54.2);
+      tl.to(".wave-fill", { width: "75%", duration: 1.1 }, 57.3);
+      tl.to(".wave-knob", { left: "75%", duration: 1.1 }, 57.3);
+      tl.to(".wave-value", { innerText: 120, snap: { innerText: 1 }, duration: 1.1 }, 57.3);
+      tl.to(".interference-line", { scaleX: 1.2, rotation: "+=8", duration: 1.1, stagger: 0.08 }, 57.3);
+      tl.to(".node-metric", { innerText: 5, snap: { innerText: 1 }, duration: 0.8 }, 57.5);
+      tl.fromTo(".wave-overlay", { opacity: 0, y: 28, scale: 0.96 }, { opacity: 1, y: 0, scale: 1, duration: 0.6 }, 59.2);
+      wipeAt(63.45);
+
+      tl.from("#shot-6 .kicker", { opacity: 0, y: 34, duration: 0.5 }, 64.2);
+      tl.from("#shot-6 .headline", { opacity: 0, y: 40, duration: 0.6 }, 64.4);
+      tl.from(".terminal", { opacity: 0, y: 42, duration: 0.7 }, 64.8);
+      tl.fromTo(".typed-1", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35 }, 65.2);
+      tl.to(".cursor", { opacity: 0, duration: 0.2, repeat: 17, yoyo: true, ease: "none" }, 65.25);
+      tl.fromTo(".typed-2", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35 }, 66.7);
+      tl.fromTo(".typed-3", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35 }, 68.0);
+      tl.fromTo(".typed-4", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35 }, 69.3);
+      tl.fromTo(".typed-5", { opacity: 0, x: -20 }, { opacity: 1, x: 0, duration: 0.35 }, 70.5);
+      tl.fromTo(".provider-card", { opacity: 0, rotationY: -85, y: 24 }, { opacity: 1, rotationY: 0, y: 0, duration: 0.58, stagger: 0.12, ease: "back.out(1.6)" }, 65.2);
+      tl.fromTo(".build-card-1", { opacity: 0, y: 42 }, { opacity: 1, y: 0, duration: 0.45 }, 67.6);
+      tl.fromTo(".build-card-2", { opacity: 0, y: 42 }, { opacity: 1, y: 0, duration: 0.45 }, 68.2);
+      tl.fromTo(".build-card-3", { opacity: 0, scale: 0.82, y: 42 }, { opacity: 1, scale: 1, y: 0, duration: 0.62, ease: "back.out(1.5)" }, 71.0);
+      wipeAt(75.45);
+
+      tl.from("#shot-7 .kicker", { opacity: 0, y: 34, duration: 0.5 }, 76.2);
+      tl.from("#shot-7 .headline", { opacity: 0, y: 46, duration: 0.7 }, 76.4);
+      tl.from("#shot-7 .subhead", { opacity: 0, y: 36, duration: 0.6 }, 76.8);
+      tl.fromTo(".final-card", { opacity: 0, y: 48, scale: 0.98 }, { opacity: 1, y: 0, scale: 1, duration: 0.75, stagger: 0.14 }, 77.5);
+      tl.fromTo(".arch-node", { opacity: 0, x: -34 }, { opacity: 1, x: 0, duration: 0.42, stagger: 0.22 }, 78.2);
+      tl.fromTo(".arrow", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 0.3, stagger: 0.22 }, 78.45);
+      tl.fromTo(".cta", { opacity: 0, y: 30, scale: 0.95 }, { opacity: 1, y: 0, scale: 1, duration: 0.7, ease: "back.out(1.4)" }, 81.4);
+      wipeAt(89.45);
+
+      tl.from("#shot-8 .kicker", { opacity: 0, y: 34, duration: 0.5 }, 90.2);
+      tl.from("#shot-8 .headline", { opacity: 0, y: 42, duration: 0.65 }, 90.45);
+      tl.from("#shot-8 .subhead", { opacity: 0, y: 34, duration: 0.55 }, 90.85);
+      tl.fromTo(".vision-item", { opacity: 0, x: -44 }, { opacity: 1, x: 0, duration: 0.52, stagger: 0.18 }, 91.5);
+      tl.fromTo(".vision-engine", { opacity: 0, x: 52, scale: 0.97 }, { opacity: 1, x: 0, scale: 1, duration: 0.7 }, 91.7);
+      tl.fromTo(".engine-ring", { opacity: 0, scale: 0.6, rotation: -24 }, { opacity: 1, scale: 1, rotation: 0, duration: 0.85, stagger: 0.16 }, 92.25);
+      tl.fromTo(".engine-core", { opacity: 0, scale: 0.5 }, { opacity: 1, scale: 1, duration: 0.65, ease: "back.out(1.5)" }, 92.55);
+      tl.fromTo(".knowledge-beam", { opacity: 0, scaleX: 0.05 }, { opacity: 1, scaleX: 1, duration: 0.45, stagger: 0.1 }, 92.85);
+      tl.fromTo(".vision-punch", { opacity: 0, scale: 0.78 }, { opacity: 1, scale: 1, duration: 0.62, ease: "back.out(1.6)" }, 93.05);
+      tl.fromTo(".engine-label", { opacity: 0, y: 18 }, { opacity: 1, y: 0, duration: 0.42, stagger: 0.12 }, 93.35);
+      tl.to(".engine-ring", { rotation: 18, duration: 4.2, stagger: 0.1, ease: "sine.inOut" }, 94.0);
+      tl.to(".knowledge-beam", { scaleX: 1.12, opacity: 0.55, duration: 0.8, repeat: 5, yoyo: true, stagger: 0.08, ease: "sine.inOut" }, 94.0);
+      tl.to(".engine-core", { scale: 1.08, duration: 0.9, repeat: 4, yoyo: true, ease: "sine.inOut" }, 94.2);
+      wipeAt(103.45);
+
+      tl.fromTo(".final-image-kicker", { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5 }, 104.25);
+      tl.fromTo(".final-image-card", { opacity: 0, y: 48, scale: 0.72, rotation: -8 }, { opacity: 1, y: 0, scale: 1, rotation: 0, duration: 0.85, ease: "back.out(1.5)" }, 104.65);
+      tl.fromTo(".final-tagline", { opacity: 0, y: 34 }, { opacity: 1, y: 0, duration: 0.62 }, 105.35);
+      tl.fromTo(".final-subline", { opacity: 0, y: 22 }, { opacity: 1, y: 0, duration: 0.5 }, 105.85);
+      tl.to(".final-image-card", { scale: 1.05, duration: 1.3, repeat: 3, yoyo: true, ease: "sine.inOut" }, 106.1);
+      tl.to("#shot-9 .scene-content", { opacity: 0, duration: 0.7, ease: "power2.in" }, 111.1);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "id": "flabs-product-demo",
+  "title": "flabs Product Demo Video",
+  "domain": "video",
+  "engine": "hyperframes",
+  "durationSeconds": 112,
+  "width": 1920,
+  "height": 1080,
+  "fps": 30,
+  "description": "A 90-second HyperFrames product demo for flabs, the AI physics playground.",
+  "parameters": [],
+  "measurements": [],
+  "formulas": [],
+  "validityLimits": [
+    "Product-demo visualization, not a numerical simulation artifact.",
+    "Rocket and wave animations are illustrative but aligned to the repository's existing flabs labs."
+  ]
+}

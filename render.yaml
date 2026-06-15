@@ -6,5 +6,7 @@ services:
     startCommand: node server.js
     healthCheckPath: /api/health
     envVars:
-      - key: NODE_VERSION
-        value: 22
+      - key: NODE_ENV
+        value: production
+      - key: FLABS_DATA_DIR
+        value: /var/data

@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="with-demo-banner">
-<body>
   <div id="app">
     <!-- LAUNCHPAD VIEW -->
     <div id="view-launchpad" class="view active">
+      <div id="volatile-warning" class="hidden">⚠️ No persistent storage — all accounts and labs are temporary and lost on restart.</div>
       <div id="demo-banner">
         <span>🧪 <strong>DSH Hacks 2026 Demo</strong></span>
         <span class="sep">·</span>
-        <span>Your API key stays in your browser</span>
+        <span>Free plan — data is not persisted</span>
 
         <span class="sep">·</span>
         <a href="SECURITY.md" target="_blank" rel="noopener">Security</a>
@@ -27,9 +27,11 @@
         <div class="brand">
           <h1>flabs</h1>
           <span class="tagline">physics, but make it fun</span>
+          <span id="volatile-badge" title="Data is lost on server restart">⚡ Demo (volatile)</span>
         </div>
         <div class="header-actions">
-          <button id="btn-api-key" class="btn-ghost" title="Enter API key">🔑 Key</button>
+          <button id="btn-account" class="btn-ghost" title="Private account">👤 Account</button>
+          <button id="btn-api-key" class="btn-ghost" title="Enter provider key">🔑 Provider</button>
           <button id="btn-new-space" class="btn-primary">+ New Lab</button>
         </div>
       </header>
@@ -49,7 +51,7 @@
           <h2 id="auth-modal-title">Connect your AI</h2>
           <button id="btn-auth-close" class="btn-ghost btn-modal-close" type="button">×</button>
         </div>
-        <p class="modal-subtitle">pi needs the provider first. A raw API key alone is not enough.</p>
+        <p class="modal-subtitle">The server runs the pi SDK agent. Your provider key is sent over same-origin HTTPS for each builder turn and is not stored by default.</p>
         <form id="auth-form">
           <label class="field">
             <span>Provider</span>
@@ -65,9 +67,9 @@
           </label>
           <label class="field field-checkbox">
             <input id="auth-remember" type="checkbox">
-            <span>Remember on this device</span>
+            <span>Remember provider/model on this device</span>
           </label>
-          <p id="auth-storage-note" class="field-note">Default: key stays only for this browser session.</p>
+          <p id="auth-storage-note" class="field-note">Default: key stays only for this browser session; localStorage stores provider/model only.</p>
           <div class="modal-actions">
             <button id="btn-auth-clear" class="btn-ghost hidden" type="button">Clear key</button>
             <div class="modal-actions-right">
@@ -76,6 +78,40 @@
             </div>
           </div>
         </form>
+      </div>
+    </div>
+
+    <div id="account-modal" class="modal hidden" aria-hidden="true">
+      <div class="modal-backdrop" data-close-account="true"></div>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="account-modal-title">
+        <div class="modal-header">
+          <h2 id="account-modal-title">Private demo account</h2>
+          <button id="btn-account-close" class="btn-ghost btn-modal-close" type="button">×</button>
+        </div>
+        <p class="modal-subtitle">Private labs are tied to this account cookie. Save the recovery code if you want to return later.</p>
+        <p id="account-volatile-note" class="field-note volatile hidden">⚠️ No persistent storage — accounts and labs are lost on server restart.</p>
+        <div id="account-current" class="field-note">Not signed in.</div>
+        <form id="account-create-form">
+          <label class="field">
+            <span>Display name</span>
+            <input id="account-display-name" type="text" autocomplete="nickname" placeholder="e.g. Demo student">
+          </label>
+          <button class="btn-primary" type="submit">Create private account</button>
+        </form>
+        <form id="account-login-form">
+          <label class="field">
+            <span>Recovery code</span>
+            <input id="account-recovery-code" type="password" autocomplete="off" spellcheck="false" placeholder="flabs_...">
+          </label>
+          <div class="modal-actions">
+            <button id="btn-account-logout" class="btn-ghost hidden" type="button">Log out</button>
+            <div class="modal-actions-right">
+              <button class="btn-ghost" type="button" data-close-account="true">Cancel</button>
+              <button class="btn-primary" type="submit">Log in</button>
+            </div>
+          </div>
+        </form>
+        <pre id="account-recovery-result" class="recovery-code hidden"></pre>
       </div>
     </div>
 
