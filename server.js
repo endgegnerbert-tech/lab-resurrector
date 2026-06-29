@@ -167,22 +167,13 @@ function defaultExperimentManifest(id, title) {
     domain: 'physics',
     engine: 'canvas-2d',
     level: 'school',
-    concepts: ['private lab'],
-    parameters: {
-      amplitude: { label: 'Amplitude', min: 10, max: 120, step: 1, default: 60, unit: 'px', meaning: 'Oscillation size' },
-      frequency: { label: 'Frequency', min: 0.1, max: 2, step: 0.1, default: 0.8, unit: 'Hz', meaning: 'Cycles per second' },
+    concepts: ['clean slate'],
+    parameters: {},
+    measurements: [],
+    formulas: [],
+    validityLimits: {
+      model: 'Clean slate. Ask the builder to create the experiment.',
     },
-    measurements: [
-      { id: 't', label: 'Time', unit: 's' },
-      { id: 'y', label: 'Displacement', unit: 'px' },
-    ],
-    formulas: [{
-      id: 'simple-harmonic-demo',
-      name: 'Simple harmonic starting model',
-      formula: 'y(t) = A sin(2π f t)',
-      variables: { A: 'Amplitude', f: 'Frequency', t: 'Time' },
-      validWhen: 'Small-amplitude classroom demo model.',
-    }],
   };
 }
 
@@ -212,57 +203,40 @@ function defaultSketchJs() {
   return `(function () {
   const canvas = document.getElementById('lab');
   const ctx = canvas.getContext('2d');
-  const params = { amplitude: 60, frequency: 0.8 };
-  let running = true;
-  let start = performance.now();
 
   function resize() {
     canvas.width = window.innerWidth * devicePixelRatio;
     canvas.height = window.innerHeight * devicePixelRatio;
     ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    draw();
   }
 
-  function emit(payload) {
-    if (window.parent) window.parent.postMessage({ type: 'experiment:measurement', payload }, '*');
-  }
-
-  function frame(now) {
-    if (running) {
-      const t = (now - start) / 1000;
-      const w = canvas.width / devicePixelRatio;
-      const h = canvas.height / devicePixelRatio;
-      const mid = h / 2;
-      const y = params.amplitude * Math.sin(2 * Math.PI * params.frequency * t);
-      ctx.clearRect(0, 0, w, h);
-      ctx.strokeStyle = '#252540';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(0, mid);
-      ctx.lineTo(w, mid);
-      ctx.stroke();
-      ctx.fillStyle = '#7c6cf0';
-      ctx.beginPath();
-      ctx.arc(w / 2, mid + y, 28, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#40d9b8';
-      ctx.fillText('y = ' + y.toFixed(1) + ' px', w / 2 + 40, mid + y + 4);
-      emit({ t: Number(t.toFixed(2)), y: Number(y.toFixed(2)) });
-    }
-    requestAnimationFrame(frame);
+  function draw() {
+    const w = canvas.width / devicePixelRatio;
+    const h = canvas.height / devicePixelRatio;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#070711';
+    ctx.fillRect(0, 0, w, h);
+    ctx.strokeStyle = '#20203a';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6, 8]);
+    ctx.strokeRect(24, 24, Math.max(0, w - 48), Math.max(0, h - 48));
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#8b8baa';
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Clean lab: ask flabs to build an experiment.', w / 2, h / 2);
+    ctx.textAlign = 'start';
   }
 
   window.addEventListener('resize', resize);
   window.addEventListener('message', (event) => {
-    // Sandbox makes our origin "null"; bind to the parent window instead.
     if (window.parent && event.source !== window.parent) return;
     const msg = event.data || {};
-    if (msg.type === 'param:set' && Object.prototype.hasOwnProperty.call(params, msg.name)) params[msg.name] = Number(msg.value);
-    if (msg.type === 'control:play') running = !!msg.playing;
-    if (msg.type === 'control:reset') start = performance.now();
+    if (msg.type === 'control:reset') draw();
   });
 
   resize();
-  requestAnimationFrame(frame);
 })();
 `;
 }
@@ -316,7 +290,7 @@ function ensureStarterSpace(store, user) {
     title,
     ownerId: user.id,
     domain: 'physics',
-    concepts: ['private lab'],
+    concepts: ['clean slate'],
     createdAt: new Date().toISOString(),
   };
   store.spaces.push(space);
@@ -513,7 +487,10 @@ function countManifestEntries(value) {
 }
 
 function buildAgentFinalText(rawText, touchedFiles, verification, manifest) {
-  if (!touchedFiles.size) return rawText || 'I checked the lab.';
+  if (!touchedFiles.size) {
+    const note = String(rawText || '').trim();
+    return note || 'Ich habe nichts am Lab geaendert. Bitte beschreibe direkt, was gebaut werden soll, z.B. "Baue ein Reihenschaltung-und-Parallelschaltung-Experiment".';
+  }
   const title = manifest?.title || 'Your private lab';
   const controls = countManifestEntries(manifest?.parameters);
   const formulas = countManifestEntries(manifest?.formulas);
@@ -806,7 +783,7 @@ async function main() {
         title,
         ownerId: user.id,
         domain: 'physics',
-        concepts: ['private lab'],
+        concepts: ['clean slate'],
         createdAt: new Date().toISOString(),
       };
       store.spaces.push(space);
