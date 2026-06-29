@@ -8,6 +8,7 @@
     "update-models": "node scripts/generate-model-catalog.js"
   },
   "dependencies": {
+    "@black-knight.dev/emet": "^2.0.0",
     "@earendil-works/pi-coding-agent": "^0.79.3",
     "express": "^4.21.0",
     "typebox": "1.1.38"

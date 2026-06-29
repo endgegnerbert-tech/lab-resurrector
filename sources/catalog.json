@@ -161,6 +161,34 @@
       "useFor": ["p5.js-concepts", "engine-patterns"],
       "allowedUse": "inspiration-only",
       "notes": "p5.js Physik-Konzepte. Lizenz ungeprüft. Nur Inspiration bis zur Klärung."
+    },
+    {
+      "id": "ligo-caltech-gw",
+      "name": "LIGO Caltech gravitational-wave education resources",
+      "url": "https://www.ligo.caltech.edu/page/what-are-gw",
+      "license": null,
+      "licenseUrl": null,
+      "licenseStatus": "reference-only",
+      "version": "2026-06-28",
+      "category": "reference",
+      "usage": "Formula",
+      "useFor": ["gravitational-waves", "relativity", "binary-systems", "detectors"],
+      "allowedUse": "concept-and-formula-reference-only",
+      "notes": "Autoritative LIGO-Erklaerungen fuer Gravitationswellen, Strain und Detektionsprinzipien. Keine Code-Uebernahme."
+    },
+    {
+      "id": "nasa-gravitational-waves",
+      "name": "NASA gravitational waves education resources",
+      "url": "https://science.nasa.gov/mission/hubble/science/science-behind-the-discoveries/hubble-gravity-waves/",
+      "license": null,
+      "licenseUrl": null,
+      "licenseStatus": "reference-only",
+      "version": "2026-06-28",
+      "category": "reference",
+      "usage": "Inspiration",
+      "useFor": ["gravitational-waves", "relativity", "space-science", "visualization"],
+      "allowedUse": "concept-reference-only",
+      "notes": "NASA-Hintergrundwissen fuer anschauliche Gravitationswellen-Erklaerungen. Keine Code-Uebernahme."
     }
   ]
 }

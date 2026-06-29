@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "domain": "physics",
+  "topic": "relativity",
+  "description": "Grundlegende Formeln und Modellgrenzen fuer Gravitationswellen-Demos.",
+  "lastUpdated": "2026-06-28",
+  "formulas": [
+    {
+      "id": "gw-frequency-binary-dominant-mode",
+      "name": "Gravitationswellen-Frequenz eines Kreisbahn-Binaersystems",
+      "formula": "f_GW = 2 · f_orb",
+      "variables": {
+        "f_GW": "dominante Gravitationswellen-Frequenz (Hz)",
+        "f_orb": "Orbitalfrequenz des Binaersystems (Hz)"
+      },
+      "validWhen": "Quasi-kreisfoermiges kompaktes Binaersystem; dominante Quadrupol-Mode",
+      "sourceIds": ["ligo-caltech-gw", "nasa-gravitational-waves"]
+    },
+    {
+      "id": "gw-power-circular-binary",
+      "name": "Abgestrahlte Gravitationswellen-Leistung (Quadrupol-Naeherung)",
+      "formula": "P = (32/5) · G^4/c^5 · (m1^2 · m2^2 · (m1 + m2)) / r^5",
+      "variables": {
+        "P": "abgestrahlte Leistung (W)",
+        "G": "Gravitationskonstante",
+        "c": "Lichtgeschwindigkeit",
+        "m1": "Masse 1 (kg)",
+        "m2": "Masse 2 (kg)",
+        "r": "Abstand der Massenschwerpunkte (m)"
+      },
+      "validWhen": "Punktmassen, nichtrelativistische/quasi-newtonsche Kreisbahn, fuehrende Quadrupol-Naeherung",
+      "sourceIds": ["ligo-caltech-gw"]
+    },
+    {
+      "id": "gw-strain-educational-scaling",
+      "name": "Gravitationswellen-Strain als Bildungsmodell",
+      "formula": "h ~ DeltaL / L",
+      "variables": {
+        "h": "dimensionsloser Strain",
+        "DeltaL": "relative Laengenaenderung",
+        "L": "Messarm-/Referenzlaenge"
+      },
+      "validWhen": "Konzeptuelle Visualisierung; nicht als numerischer Detektor- oder Astrophysik-Solver verwenden",
+      "sourceIds": ["ligo-caltech-gw", "nasa-gravitational-waves"]
+    }
+  ]
+}

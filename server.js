@@ -1,7 +1,7 @@
 /**
  * server.js — flabs server
  *
- * Static public labs + private demo accounts + server-side pi SDK agent bridge.
+ * Static public labs + private browser sessions + server-side pi SDK agent bridge.
  * User API keys are accepted per agent request and are not persisted by default.
  */
 
@@ -18,11 +18,11 @@ const IS_PROD = process.env.NODE_ENV === 'production';
 const EXPERIMENTS_DIR = join(__dirname, 'experiments');
 const PUBLIC_SPACES_DIR = join(EXPERIMENTS_DIR, 'spaces');
 const DATA_DIR = process.env.FLABS_DATA_DIR || process.env.DATA_DIR || join(__dirname, '.data');
-const HAS_PERSISTENT_DISK = !!process.env.FLABS_DATA_DIR;
+const HAS_PERSISTENT_DISK = process.env.FLABS_DATA_PERSISTENT === 'true';
 const PRIVATE_SPACES_DIR = join(DATA_DIR, 'spaces');
 const STORE_FILE = join(DATA_DIR, 'store.json');
 const SESSION_COOKIE = 'flabs_session';
-const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
+const GUEST_SESSION_TTL_MS = 1000 * 60 * 60 * 24;
 const ALLOWED_SPACE_FILES = new Set(['index.html', 'sketch.js', 'experiment.json', 'sources.json']);
 const PROVIDER_CATALOG = readJsonFile(join(__dirname, 'sources', 'pi-model-catalog.json'), []);
 
@@ -61,10 +61,6 @@ function sanitizeSpaceId(value) {
     .slice(0, 48) || 'new-space';
 }
 
-function sanitizeDisplayName(value) {
-  return String(value || '').trim().replace(/\s+/g, ' ').slice(0, 80) || 'Demo account';
-}
-
 function isValidSpaceId(value) {
   return /^[a-z][a-z0-9-]*$/.test(String(value || ''));
 }
@@ -96,8 +92,8 @@ function serializeSessionCookie(token, maxAgeSeconds) {
     'Path=/',
     'HttpOnly',
     'SameSite=Strict',
-    'Max-Age=' + maxAgeSeconds,
   ];
+  if (Number.isFinite(maxAgeSeconds)) parts.push('Max-Age=' + maxAgeSeconds);
   if (IS_PROD) parts.push('Secure');
   return parts.join('; ');
 }
@@ -116,7 +112,7 @@ function getCurrentUser(req) {
 
 function requireUser(req, res, next) {
   const auth = getCurrentUser(req);
-  if (!auth) return res.status(401).json({ error: 'Account required' });
+  if (!auth) return res.status(401).json({ error: 'Private session required' });
   req.flabsAuth = auth;
   next();
 }
@@ -227,7 +223,7 @@ function defaultSketchJs() {
   }
 
   function emit(payload) {
-    if (window.parent) window.parent.postMessage({ type: 'experiment:measurement', payload }, window.location.origin);
+    if (window.parent) window.parent.postMessage({ type: 'experiment:measurement', payload }, '*');
   }
 
   function frame(now) {
@@ -257,7 +253,8 @@ function defaultSketchJs() {
 
   window.addEventListener('resize', resize);
   window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
+    // Sandbox makes our origin "null"; bind to the parent window instead.
+    if (window.parent && event.source !== window.parent) return;
     const msg = event.data || {};
     if (msg.type === 'param:set' && Object.prototype.hasOwnProperty.call(params, msg.name)) params[msg.name] = Number(msg.value);
     if (msg.type === 'control:play') running = !!msg.playing;
@@ -288,8 +285,123 @@ function createPrivateSpaceFiles(userId, id, title) {
   });
 }
 
+function createSession(store, user, ttlMs) {
+  const sessionToken = randomToken(32);
+  store.sessions = store.sessions.filter((s) => Date.parse(s.expiresAt) > Date.now());
+  store.sessions.push({
+    tokenHash: sha256(sessionToken),
+    userId: user.id,
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + ttlMs).toISOString(),
+  });
+  return sessionToken;
+}
+
+function userResponse(user) {
+  return {
+    id: user.id,
+    displayName: user.displayName,
+    createdAt: user.createdAt,
+    temporary: true,
+  };
+}
+
+function ensureStarterSpace(store, user) {
+  if (store.spaces.some((s) => s.ownerId === user.id)) return null;
+  const title = 'My private lab';
+  const id = ensureUniquePrivateSpaceId(store, user.id, title);
+  createPrivateSpaceFiles(user.id, id, title);
+  const space = {
+    id,
+    title,
+    ownerId: user.id,
+    domain: 'physics',
+    concepts: ['private lab'],
+    createdAt: new Date().toISOString(),
+  };
+  store.spaces.push(space);
+  return space;
+}
+
+function createGuestAccount(res) {
+  const store = readStore();
+  const user = {
+    id: 'user_' + randomToken(16),
+    displayName: 'Private session',
+    createdAt: new Date().toISOString(),
+  };
+  store.users.push(user);
+  ensureStarterSpace(store, user);
+  const sessionToken = createSession(store, user, GUEST_SESSION_TTL_MS);
+  writeStore(store);
+  res.setHeader('Set-Cookie', serializeSessionCookie(sessionToken));
+  return user;
+}
+
 function readPrivateManifest(userId, id) {
   return readJsonFile(join(resolvePrivateSpaceDir(userId, id), 'experiment.json'), null);
+}
+
+function allFormulaCollections() {
+  const dir = join(__dirname, 'sources', 'formulas');
+  try {
+    return fs.readdirSync(dir)
+      .filter((file) => file.endsWith('.json'))
+      .map((file) => readJsonFile(join(dir, file), null))
+      .filter(Boolean);
+  } catch (_) {
+    return [];
+  }
+}
+
+function normalizeSearchText(value) {
+  return String(value || '').toLowerCase();
+}
+
+function sourceCatalogEntries() {
+  const catalog = readJsonFile(join(__dirname, 'sources', 'catalog.json'), { entries: [] });
+  return Array.isArray(catalog.entries) ? catalog.entries : [];
+}
+
+function searchLocalPhysics(query, limit = 8) {
+  const q = normalizeSearchText(query);
+  const terms = q.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
+  const rows = [];
+
+  allFormulaCollections().forEach((collection) => {
+    (collection.formulas || []).forEach((formula) => {
+      const haystack = normalizeSearchText([
+        collection.topic,
+        formula.id,
+        formula.name,
+        formula.formula,
+        formula.validWhen,
+        Object.values(formula.variables || {}).join(' '),
+      ].join(' '));
+      const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0);
+      if (score > 0 || !terms.length) rows.push({ type: 'formula', score, topic: collection.topic, ...formula });
+    });
+  });
+
+  sourceCatalogEntries().forEach((source) => {
+    const haystack = normalizeSearchText([
+      source.id,
+      source.name,
+      source.url,
+      source.license,
+      source.licenseStatus,
+      source.usage,
+      source.allowedUse,
+      source.notes,
+      (source.useFor || []).join(' '),
+    ].join(' '));
+    const score = terms.reduce((sum, term) => sum + (haystack.includes(term) ? 1 : 0), 0);
+    if (score > 0 || !terms.length) rows.push({ type: 'source', score, ...source });
+  });
+
+  return rows
+    .sort((a, b) => b.score - a.score || String(a.id || a.name).localeCompare(String(b.id || b.name)))
+    .slice(0, Math.max(1, Math.min(Number(limit) || 8, 20)));
 }
 
 function safeSpaceFilePath(userId, spaceId, file) {
@@ -300,15 +412,88 @@ function safeSpaceFilePath(userId, spaceId, file) {
   return resolved;
 }
 
+function scriptTagsFor(html) {
+  return [...String(html || '').matchAll(/<script\b[^>]*>/gi)].map((match) => match[0]);
+}
+
+function scriptSrcFor(tag) {
+  const match = String(tag || '').match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+  return match ? match[1].trim() : '';
+}
+
+function isLocalSketchScript(src) {
+  return src === 'sketch.js' || src === './sketch.js';
+}
+
+function validateIndexHtmlRules(html) {
+  const issues = [];
+  const tags = scriptTagsFor(html);
+  const srcs = tags.map(scriptSrcFor).filter(Boolean);
+  if (tags.some((tag) => !scriptSrcFor(tag))) {
+    issues.push('index.html includes inline script; use sketch.js only');
+  }
+  if (srcs.some((src) => !isLocalSketchScript(src))) {
+    issues.push('index.html includes a forbidden external script');
+  }
+  if (!srcs.some(isLocalSketchScript)) {
+    issues.push('index.html must load local sketch.js');
+  }
+  if (/<(?:input|button|select|textarea|form)\b/i.test(html)) {
+    issues.push('index.html must not define controls; parent app owns controls');
+  }
+  if (/\.\.\//.test(html)) issues.push('index.html includes a parent path');
+  return issues;
+}
+
+function verifyPrivateSpace(userId, spaceId) {
+  const issues = [];
+  const dir = resolvePrivateSpaceDir(userId, spaceId);
+  ALLOWED_SPACE_FILES.forEach((file) => {
+    const p = safeSpaceFilePath(userId, spaceId, file);
+    if (!fs.existsSync(p)) issues.push(file + ' is missing');
+  });
+  ['experiment.json', 'sources.json'].forEach((file) => {
+    const p = safeSpaceFilePath(userId, spaceId, file);
+    if (!fs.existsSync(p)) return;
+    try { JSON.parse(fs.readFileSync(p, 'utf-8')); }
+    catch (err) { issues.push(file + ' is not valid JSON'); }
+  });
+  const indexPath = safeSpaceFilePath(userId, spaceId, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    const html = fs.readFileSync(indexPath, 'utf-8');
+    issues.push(...validateIndexHtmlRules(html));
+  }
+  const sketchPath = safeSpaceFilePath(userId, spaceId, 'sketch.js');
+  if (fs.existsSync(sketchPath)) {
+    const sketch = fs.readFileSync(sketchPath, 'utf-8');
+    if (/document\.(?:querySelector|querySelectorAll|createElement)|localStorage|sessionStorage/i.test(sketch)) {
+      issues.push('sketch.js must not manipulate parent-style DOM or browser storage');
+    }
+    const domIds = [...sketch.matchAll(/document\.getElementById\(\s*['"`]([^'"`]+)['"`]\s*\)/g)].map((m) => m[1]);
+    domIds.filter((id) => id !== 'lab').forEach((id) => issues.push('sketch.js may only read canvas id "lab", found "' + id + '"'));
+  }
+  const files = fs.existsSync(dir) ? fs.readdirSync(dir) : [];
+  files.forEach((file) => {
+    if (!ALLOWED_SPACE_FILES.has(file)) issues.push('unexpected file: ' + file);
+  });
+  return { ok: issues.length === 0, issues };
+}
+
 function validateSpaceFile(file, content) {
   const text = String(content || '');
   if (text.length > 200_000) throw new Error('File too large');
   if (file === 'experiment.json' || file === 'sources.json') JSON.parse(text);
   if (file === 'index.html') {
-    if (/<script\b[^>]*\bsrc=["'](?!\.\/?sketch\.js["'])/i.test(text)) {
-      throw new Error('Only local sketch.js script is allowed in private draft HTML');
+    const issues = validateIndexHtmlRules(text);
+    if (issues.length) throw new Error(issues.join('; '));
+  }
+  if (file === 'sketch.js') {
+    if (/document\.(?:querySelector|querySelectorAll|createElement)|localStorage|sessionStorage/i.test(text)) {
+      throw new Error('sketch.js must not create/query UI DOM or use browser storage');
     }
-    if (/\.\.\//.test(text)) throw new Error('Parent paths are not allowed');
+    const domIds = [...text.matchAll(/document\.getElementById\(\s*['"`]([^'"`]+)['"`]\s*\)/g)].map((m) => m[1]);
+    const badId = domIds.find((id) => id !== 'lab');
+    if (badId) throw new Error('sketch.js may only read canvas id "lab"; controls/data live in the parent app');
   }
   return text;
 }
@@ -319,6 +504,30 @@ function contentTypeFor(file) {
   if (ext === '.js') return 'text/javascript; charset=utf-8';
   if (ext === '.json') return 'application/json; charset=utf-8';
   return 'text/plain; charset=utf-8';
+}
+
+function countManifestEntries(value) {
+  if (Array.isArray(value)) return value.length;
+  if (value && typeof value === 'object') return Object.keys(value).length;
+  return 0;
+}
+
+function buildAgentFinalText(rawText, touchedFiles, verification, manifest) {
+  if (!touchedFiles.size) return rawText || 'I checked the lab.';
+  const title = manifest?.title || 'Your private lab';
+  const controls = countManifestEntries(manifest?.parameters);
+  const formulas = countManifestEntries(manifest?.formulas);
+  const measurements = countManifestEntries(manifest?.measurements);
+  const verifyLine = verification.ok
+    ? 'Verifikation: ok.'
+    : 'Verifikation: bitte pruefen - ' + verification.issues.join('; ');
+  const limits = manifest?.validityLimits?.model || manifest?.validWhen || manifest?.formulas?.find((formula) => formula?.validWhen)?.validWhen;
+  const limitLine = limits ? '\nGrenze: ' + limits : '';
+  return [
+    'Fertig: ' + title + ' wurde aktualisiert.',
+    'Controls: ' + controls + ', Formeln: ' + formulas + ', Messwerte: ' + measurements + '.',
+    verifyLine + limitLine,
+  ].join('\n');
 }
 
 async function loadPiSdk() {
@@ -335,31 +544,18 @@ async function loadPiSdk() {
   }
 }
 
-function createLabResourceLoader(systemPrompt, createExtensionRuntime) {
-  return {
-    getExtensions: () => ({ extensions: [], errors: [], runtime: createExtensionRuntime() }),
-    getSkills: () => ({ skills: [], diagnostics: [] }),
-    getPrompts: () => ({ prompts: [], diagnostics: [] }),
-    getThemes: () => ({ themes: [], diagnostics: [] }),
-    getAgentsFiles: () => ({ agentsFiles: [] }),
-    getSystemPrompt: () => systemPrompt,
-    getAppendSystemPrompt: () => [],
-    extendResources: () => {},
-    reload: async () => {},
-  };
-}
-
 async function runPiAgent({ userId, spaceId, provider, modelId, apiKey, message }) {
   const { sdk, Type } = await loadPiSdk();
   const {
     AuthStorage,
+    DefaultResourceLoader,
     ModelRegistry,
     SessionManager,
     SettingsManager,
     createAgentSession,
-    createExtensionRuntime,
     defineTool,
   } = sdk;
+  const emetExtension = (await import('@black-knight.dev/emet')).default;
 
   const spaceDir = resolvePrivateSpaceDir(userId, spaceId);
   const authStorage = AuthStorage.inMemory();
@@ -369,19 +565,24 @@ async function runPiAgent({ userId, spaceId, provider, modelId, apiKey, message 
   if (!model) throw new Error('Unknown pi provider/model');
 
   const touchedFiles = new Set();
-  const readTool = defineTool({
-    name: 'space_read_file',
-    label: 'Read private lab file',
-    description: 'Read one private lab file. Allowed files: index.html, sketch.js, experiment.json, sources.json.',
-    parameters: Type.Object({ file: Type.String({ description: 'File name' }) }),
-    execute: async (_toolCallId, params) => {
-      const file = String(params.file || '');
-      const p = safeSpaceFilePath(userId, spaceId, file);
-      return { content: [{ type: 'text', text: fs.readFileSync(p, 'utf-8') }], details: {} };
+  let groundingUsed = false;
+  let emetUsed = false;
+  const getCurrentTool = defineTool({
+    name: 'space_get_current',
+    label: 'Get current private lab',
+    description: 'Read the current private lab files: index.html, sketch.js, experiment.json, and sources.json.',
+    parameters: Type.Object({}),
+    execute: async () => {
+      const files = {};
+      ALLOWED_SPACE_FILES.forEach((file) => {
+        const p = safeSpaceFilePath(userId, spaceId, file);
+        files[file] = fs.existsSync(p) ? fs.readFileSync(p, 'utf-8') : '';
+      });
+      return { content: [{ type: 'text', text: JSON.stringify({ spaceId, files }, null, 2) }], details: {} };
     },
   });
-  const writeTool = defineTool({
-    name: 'space_write_file',
+  const writeCurrentFileTool = defineTool({
+    name: 'space_write_current_file',
     label: 'Write private lab file',
     description: 'Write one private lab file. Allowed files: index.html, sketch.js, experiment.json, sources.json. Keep it safe, local-only, and school physics focused.',
     parameters: Type.Object({
@@ -389,6 +590,9 @@ async function runPiAgent({ userId, spaceId, provider, modelId, apiKey, message 
       content: Type.String({ description: 'Complete file content' }),
     }),
     execute: async (_toolCallId, params) => {
+      if (!groundingUsed || !emetUsed) {
+        throw new Error('Call both source_search and emet before writing lab files.');
+      }
       const file = String(params.file || '');
       const content = validateSpaceFile(file, params.content);
       fs.writeFileSync(safeSpaceFilePath(userId, spaceId, file), content);
@@ -396,18 +600,94 @@ async function runPiAgent({ userId, spaceId, provider, modelId, apiKey, message 
       return { content: [{ type: 'text', text: 'Wrote ' + file }], details: {} };
     },
   });
-  const listTool = defineTool({
-    name: 'space_list_files',
-    label: 'List private lab files',
-    description: 'List editable private lab files.',
+  const verifyCurrentTool = defineTool({
+    name: 'space_verify_current',
+    label: 'Verify current private lab',
+    description: 'Verify that the current private lab has required files, valid JSON, and no forbidden script/path usage.',
     parameters: Type.Object({}),
-    execute: async () => ({ content: [{ type: 'text', text: [...ALLOWED_SPACE_FILES].join('\n') }], details: {} }),
+    execute: async () => ({
+      content: [{ type: 'text', text: JSON.stringify(verifyPrivateSpace(userId, spaceId), null, 2) }],
+      details: {},
+    }),
+  });
+  const sourceSearchTool = defineTool({
+    name: 'source_search',
+    label: 'Search local physics sources',
+    description: 'Search local curated physics formulas, source catalog, and source policies before designing or changing a simulation.',
+    parameters: Type.Object({
+      query: Type.String({ description: 'Physics topic, formula, or source keyword' }),
+      limit: Type.Optional(Type.Number({ description: 'Maximum results, default 8' })),
+    }),
+    execute: async (_toolCallId, params) => {
+      groundingUsed = true;
+      return {
+        content: [{ type: 'text', text: JSON.stringify(searchLocalPhysics(params.query, params.limit), null, 2) }],
+        details: {},
+      };
+    },
   });
 
   const manifest = readPrivateManifest(userId, spaceId);
-  const systemPrompt = `You are flabs, a safe physics-lab builder for a browser demo.\n\nCurrent private space: ${spaceId} (${manifest?.title || spaceId}).\n\nRules:\n- Work only through the provided space_* tools. No shell, no network, no external CDN scripts.\n- You may edit only index.html, sketch.js, experiment.json, and sources.json.\n- Keep simulations local, deterministic, educational, and age-appropriate.\n- Every built simulation must expose parameters, measurements, formulas, validity limits, and sources.json notes.\n- Prefer canvas-2d unless the user explicitly asks for p5 or matter.js.\n- If the user asks to build/change the lab, write the needed files, then explain briefly what changed.\n- Never ask for or store API keys.`;
+  const systemPrompt = `You are flabs, a safe physics-lab builder for a browser demo.
+
+Current private space: ${spaceId} (${manifest?.title || spaceId}).
+
+Architecture:
+- The iframe is ONLY the experiment canvas.
+- The parent app owns all Controls, Formula, Data, Export, Play, Reset, and Chat UI.
+- Controls are generated from experiment.json parameters.
+- Formula panel is generated from experiment.json formulas.
+- Data panel is generated from postMessage({ type: 'experiment:measurement', payload }).
+
+Rules:
+- Work only through these provided tools: emet, web_fetch, source_search, space_get_current, space_write_current_file, space_verify_current.
+- No shell, no arbitrary filesystem, no network, no external CDN scripts.
+- You may edit only index.html, sketch.js, experiment.json, and sources.json through space_write_current_file.
+- index.html must be a minimal shell: canvas#lab plus script src="sketch.js". No inputs, buttons, forms, data panels, formula panels, or inline scripts.
+- sketch.js must draw only into canvas#lab and communicate via postMessage. It must not create/query UI DOM except document.getElementById('lab').
+- Before building or changing any physics simulation, call source_search and exactly one fast emet search for the topic. Use emet with mode "fast" and authoritative/primary sources where possible. Prefer options such as requirePrimarySource, maxSites <= 3, and official/scientific host allowlists when obvious.
+- Do not call web_fetch unless the single emet result is insufficient or points to a specific page that must be read.
+- If emet cannot find adequate authoritative sources, label the model as educational/approximate.
+- Every built simulation must expose parameters, measurements, formulas, validity limits, and sources.json notes.
+- The default simulation must be visibly active immediately after load and must not start in a completed/merged/end state. Default parameters should show at least 20 seconds of motion before any terminal event.
+- The canvas may include small labels tied to the experiment, but no duplicate control/data/formula dashboard inside the iframe.
+- Keep the main visual readable: no dense full-height stripe fields, no opaque waveform/graph overlays over the experiment objects, and no large dashboard panel inside the canvas. If showing a waveform, keep it small and below or beside the main scene.
+- After writing lab files, call space_verify_current and report the result.
+- During tool work, do not narrate steps to the user. Use tools silently, repair validation errors silently, and never mention tool names, file-write attempts, validator bugs, or internal retries.
+- Keep the final chat response short: only what changed, verification, and model limits.
+- Prefer canvas-2d unless the user explicitly asks for p5 or matter.js.
+- Never ask for or store API keys.`;
 
   const settingsManager = SettingsManager.inMemory({ compaction: { enabled: false }, retry: { enabled: true, maxRetries: 1 } });
+  const resourceLoader = new DefaultResourceLoader({
+    cwd: spaceDir,
+    agentDir: join(DATA_DIR, 'pi-agent'),
+    settingsManager,
+    noExtensions: true,
+    noSkills: true,
+    noPromptTemplates: true,
+    noThemes: true,
+    noContextFiles: true,
+    systemPrompt,
+    extensionFactories: [
+      emetExtension,
+      (pi) => {
+        pi.on('tool_call', async (event) => {
+          if (event.toolName === 'emet' && emetUsed) {
+            return { block: true, reason: 'A successful emet research pass already ran. Build with the existing evidence now.' };
+          }
+          if (event.toolName === 'web_fetch' && emetUsed) {
+            return { block: true, reason: 'Use the existing emet evidence; do not fetch more pages for this student build.' };
+          }
+          return undefined;
+        });
+        pi.on('tool_result', async (event) => {
+          if (event.toolName === 'emet' && !event.isError && event.details?.ok !== false) emetUsed = true;
+        });
+      },
+    ],
+  });
+  await resourceLoader.reload();
   const { session } = await createAgentSession({
     cwd: spaceDir,
     agentDir: join(DATA_DIR, 'pi-agent'),
@@ -415,9 +695,9 @@ async function runPiAgent({ userId, spaceId, provider, modelId, apiKey, message 
     thinkingLevel: 'off',
     authStorage,
     modelRegistry,
-    resourceLoader: createLabResourceLoader(systemPrompt, createExtensionRuntime),
-    customTools: [readTool, writeTool, listTool],
-    tools: ['space_read_file', 'space_write_file', 'space_list_files'],
+    resourceLoader,
+    customTools: [sourceSearchTool, getCurrentTool, writeCurrentFileTool, verifyCurrentTool],
+    tools: ['emet', 'web_fetch', 'source_search', 'space_get_current', 'space_write_current_file', 'space_verify_current'],
     sessionManager: SessionManager.inMemory(spaceDir),
     settingsManager,
   });
@@ -439,15 +719,21 @@ async function runPiAgent({ userId, spaceId, provider, modelId, apiKey, message 
     session.dispose();
   }
 
-  return { text: text || 'I updated the lab.', touchedFiles: [...touchedFiles], toolEvents };
+  const verification = verifyPrivateSpace(userId, spaceId);
+  const updatedManifest = readPrivateManifest(userId, spaceId);
+  return {
+    text: buildAgentFinalText(text, touchedFiles, verification, updatedManifest),
+    touchedFiles: [...touchedFiles],
+    toolEvents,
+  };
 }
 
 async function main() {
   console.log('flabs — private physics playground');
   console.log('Data dir:', DATA_DIR);
   if (!HAS_PERSISTENT_DISK) {
-    console.log('⚠️  No persistent disk — accounts and private spaces are lost on restart.');
-    console.log('   Set FLABS_DATA_DIR to a persistent mount path for real persistence.');
+    console.log('⚠️  No persistent disk — private sessions and spaces are lost on restart.');
+    console.log('   Set FLABS_DATA_DIR to a real persistent mount path and FLABS_DATA_PERSISTENT=true for real persistence.');
   }
 
   const app = express();
@@ -456,6 +742,18 @@ async function main() {
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    res.setHeader('Content-Security-Policy', [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "connect-src 'self'",
+      "frame-src 'self'",
+      "frame-ancestors 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; '));
     if (IS_PROD) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
     if (req.path.startsWith('/api/') && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
       const origin = req.get('origin');
@@ -476,52 +774,13 @@ async function main() {
     res.json({ providers: PROVIDER_CATALOG });
   });
 
-  app.get('/api/account', (req, res) => {
+  app.get('/api/session', (req, res) => {
     const auth = getCurrentUser(req);
-    if (!auth) return res.json({ user: null });
-    res.json({ user: { id: auth.user.id, displayName: auth.user.displayName, createdAt: auth.user.createdAt } });
-  });
-
-  app.post('/api/account/create', (req, res) => {
-    const store = readStore();
-    const recoveryCode = 'flabs_' + randomToken(32);
-    const user = {
-      id: 'user_' + randomToken(16),
-      displayName: sanitizeDisplayName(req.body?.displayName),
-      recoveryHash: sha256(recoveryCode),
-      createdAt: new Date().toISOString(),
-    };
-    const sessionToken = randomToken(32);
-    store.users.push(user);
-    store.sessions.push({ tokenHash: sha256(sessionToken), userId: user.id, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString() });
-    writeStore(store);
-    res.setHeader('Set-Cookie', serializeSessionCookie(sessionToken, Math.floor(SESSION_TTL_MS / 1000)));
-    res.status(201).json({ user: { id: user.id, displayName: user.displayName, createdAt: user.createdAt }, recoveryCode });
-  });
-
-  app.post('/api/account/login', (req, res) => {
-    const recoveryCode = String(req.body?.recoveryCode || '').trim();
-    if (!recoveryCode) return res.status(400).json({ error: 'Recovery code required' });
-    const store = readStore();
-    const user = store.users.find((u) => u.recoveryHash === sha256(recoveryCode));
-    if (!user) return res.status(401).json({ error: 'Invalid recovery code' });
-    const sessionToken = randomToken(32);
-    store.sessions = store.sessions.filter((s) => Date.parse(s.expiresAt) > Date.now());
-    store.sessions.push({ tokenHash: sha256(sessionToken), userId: user.id, createdAt: new Date().toISOString(), expiresAt: new Date(Date.now() + SESSION_TTL_MS).toISOString() });
-    writeStore(store);
-    res.setHeader('Set-Cookie', serializeSessionCookie(sessionToken, Math.floor(SESSION_TTL_MS / 1000)));
-    res.json({ user: { id: user.id, displayName: user.displayName, createdAt: user.createdAt } });
-  });
-
-  app.post('/api/account/logout', (req, res) => {
-    const token = parseCookies(req)[SESSION_COOKIE];
-    if (token) {
-      const store = readStore();
-      store.sessions = store.sessions.filter((s) => s.tokenHash !== sha256(token));
-      writeStore(store);
+    if (!auth) {
+      const user = createGuestAccount(res);
+      return res.json({ user: userResponse(user), temporary: true });
     }
-    res.setHeader('Set-Cookie', serializeSessionCookie('', 0));
-    res.json({ ok: true });
+    res.json({ user: userResponse(auth.user), temporary: true });
   });
 
   app.get('/api/spaces', (req, res) => {
@@ -618,12 +877,34 @@ async function main() {
       });
       res.json(result);
     } catch (err) {
-      res.status(500).json({ error: err.message || 'Agent failed' });
+      res.status(500).json({ error: 'Agent request failed. Check the selected provider, model, and API key.' });
     }
   });
 
+  // Public experiments (demo labs). Paths are validated elsewhere; this only serves
+  // the public demo spaces directory.
   app.use('/experiments', express.static(join(__dirname, 'experiments')));
-  app.use(express.static(__dirname));
+
+  // Explicit, allow-listed static assets only. We deliberately do NOT serve the
+  // repo root (no express.static(__dirname)) so that server.js, package.json,
+  // package-lock.json, node_modules/, and any other repo files stay private.
+  const PUBLIC_ASSETS = ['css', 'js'];
+  PUBLIC_ASSETS.forEach((dir) => {
+    app.use('/' + dir, express.static(join(__dirname, dir)));
+  });
+  app.get(['/index.html', '/'], (_req, res) => {
+    res.sendFile(join(__dirname, 'index.html'));
+  });
+  app.get('/flabs_logo.png', (_req, res) => {
+    res.sendFile(join(__dirname, 'flabs_logo.png'));
+  });
+  app.get('/SECURITY.md', (_req, res) => {
+    res.sendFile(join(__dirname, 'SECURITY.md'));
+  });
+
+  // Fallback for any other path: 404 instead of falling through to a directory
+  // walk of the repo root.
+  app.use((_req, res) => res.status(404).send('Not found'));
 
   app.listen(PORT, '0.0.0.0', () => {
     console.log('http://localhost:' + PORT);

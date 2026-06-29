@@ -8,5 +8,5 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: FLABS_DATA_DIR
-        value: /var/data
+      - key: FLABS_DATA_PERSISTENT
+        value: "false"

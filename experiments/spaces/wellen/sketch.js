@@ -128,7 +128,8 @@
 
   // ── postMessage Bridge ──────────────────────
   window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
+    // Sandbox makes our origin "null"; bind to the parent window instead.
+    if (window.parent && event.source !== window.parent) return;
     const d = event.data;
     switch (d.type) {
       case 'control:play':
@@ -353,7 +354,7 @@
     state.frameCount++;
     if (state.frameCount % 10 === 0) {
       const m = collectMeasurements();
-      window.parent.postMessage({ type: 'experiment:measurement', payload: m }, window.location.origin);
+      window.parent.postMessage({ type: 'experiment:measurement', payload: m }, '*');
     }
 
     requestAnimationFrame(loop);

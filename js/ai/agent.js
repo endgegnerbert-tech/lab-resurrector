@@ -48,7 +48,11 @@ const AiAgent = (() => {
     config = cfg ? { ...cfg } : null;
   }
 
-  function getConfig() { return config; }
+  function getConfig() {
+    if (!config) return null;
+    const { apiKey: _apiKey, ...safeConfig } = config;
+    return { ...safeConfig, hasApiKey: !!config.apiKey };
+  }
 
   function registerToolHandler() {
     // Kept for API compatibility. Tools now run inside the server-side pi SDK session.

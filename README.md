@@ -5,7 +5,7 @@
 <h1 align="center">flabs — AI Physics Playground</h1>
 
 <p align="center">
-  <b>Interactive physics experiments in your browser. AI runs in your browser. Your API key never touches the server.</b>
+  <b>Interactive physics experiments in your browser. A sandboxed AI agent builds your own labs. Your API key is used runtime-only — never stored.</b>
 </p>
 
 <p align="center">
@@ -32,9 +32,9 @@
 
 **https://lab-resurrector.onrender.com**
 
-Open in any browser. Two experiments included (Water Rocket, Wave Interference). Create your own lab. Enter your API key to activate the AI assistant. Your key stays in your browser.
+Open in any browser. Every visitor gets a temporary private lab space automatically. Two public experiments are included (Water Rocket, Wave Interference), and the AI assistant can build private labs for you. Your API key is sent to the server **only for one agent turn** and is never persisted.
 
-*No signup. No install. No cost.*
+*No install. Bring your own provider key.*
 
 ---
 
@@ -46,14 +46,14 @@ Open in any browser. Two experiments included (Water Rocket, Wave Interference).
 
 ## The Solution
 
-flabs turns any browser into an interactive physics lab with an AI assistant. The AI runs entirely in your browser using your own API key. The server never sees your key.
+flabs turns any browser into an interactive physics lab with an AI assistant that builds simulations for you. The agent runs in a server-side sandbox with restricted tools — it can only read/write four lab files. Your provider key is used **runtime-only** for a single turn and is never written to disk.
 
 | Others | flabs |
 |--------|-------|
 | Simulation plays, student watches | AI asks, student hypothesizes, together they test |
-| API keys stored on server | Keys stay in your browser, always |
+| API keys stored on server | Key is runtime-only, discarded after one turn |
 | Locked to one AI provider | 18+ providers, you choose |
-| Requires signup | Zero signup, open in browser |
+| Pre-built labs only | Each browser gets a private lab space and can build by chat |
 
 ---
 
@@ -62,27 +62,38 @@ flabs turns any browser into an interactive physics lab with an AI assistant. Th
 ```
                           YOUR BROWSER
   ┌─────────────────────────────────────────────────────────┐
-  │                                                         │
-  │  js/ai/agent.js ────── fetch() ──────> LLM API          │
-  │  (your API key here)           OpenAI, Anthropic,       │
-  │                                 DeepSeek, Groq...       │
-  │       │                                                │
-  │       │ tool calls (sim_set_param, sim_reset...)        │
-  │       ▼                                                │
-  │  Canvas 2D Physics   Chat UI   Data Panel               │
-  │                                                         │
+  │  Launchpad + Lab View (index.html, js/main.js)          │
+  │  - Keys live in page memory only                        │
+  │  - Provider/model optionally remembered in localStorage │
+  │       │                                                 │
+  │       │ POST /api/agent/chat (key + message, one turn)  │
+  │       ▼                                                 │
   └──────────────────────┬──────────────────────────────────┘
-                         │ HTTP (static files + REST)
+                         │ same-origin HTTPS
                          ▼
-                     SERVER (Express)
+                     SERVER (Node + Express + pi SDK)
   ┌─────────────────────────────────────────────────────────┐
-  │  No pi SDK. No WebSocket. No AI logic.                  │
-  │  Serves index.html, experiments/, sources/              │
-  │  REST: /api/spaces, /api/health                         │
+  │  /api/agent/chat  →  pi SDK createAgentSession()        │
+  │  - Key is a runtime-only AuthStorage override           │
+  │  - Agent sandbox: space_read_file / space_write_file    │
+  │                   space_list_files (4 files only)       │
+  │  - No shell, no network, no external CDN scripts        │
+  │  - Session is per-turn, key discarded afterwards        │
+  │                  │                                      │
+  │                  │ provider call (your key, one turn)   │
+  │                  ▼                                      │
+  │            LLM API (OpenAI, Anthropic, DeepSeek...)     │
+  └─────────────────────────────────────────────────────────┘
+                         │
+                         ▼  generated lab files written
+  SANDBOXED IFRAME (sandbox="allow-scripts", null origin)
+  ┌─────────────────────────────────────────────────────────┐
+  │  Canvas 2D / p5 / matter.js simulation                  │
+  │  Talks to parent only via postMessage (params, data)    │
   └─────────────────────────────────────────────────────────┘
 ```
 
-**Key property: the server has zero AI dependencies.** It serves static files and manages experiment spaces. The AI agent lives in `js/ai/agent.js` and calls LLM APIs directly from the browser using your key. Your key is never transmitted to the server.
+**Key property: the agent runs server-side but in a tight sandbox.** It can edit only the four lab files of your private space and has no shell or network access. Your API key is used for one agent turn and is never persisted to disk. Lab simulations render in a sandboxed iframe (null origin) so generated code cannot reach the parent app.
 
 ---
 
@@ -101,8 +112,8 @@ Two coherent point sources with visible superposition:
 - **Physics:** Superposition principle, constructive/destructive interference
 
 ### Lab Space System
-- Isolated iframes — each experiment is its own sandboxed HTML page
-- postMessage bridge — main app controls params, play/reset, data panel
+- Isolated iframes — each experiment is its own sandboxed HTML page (`sandbox="allow-scripts"`, null origin)
+- postMessage bridge — main app controls params, play/reset, data panel; messages are bound to the owned frame via `event.source`
 - Formula panel — shows the math behind the experiment
 - Data panel — live measurements with CSV/JSON export
 - AI chat — natural language interaction with the lab assistant
@@ -111,27 +122,27 @@ Two coherent point sources with visible superposition:
 
 ## AI Tools
 
-The browser-side AI agent exposes these tools to the LLM:
+The server-side pi SDK agent exposes only these restricted tools to the LLM:
 
 | Tool | What It Does |
 |------|-------------|
-| `sim_set_param` | Change any physics parameter live (mass, angle, pressure, etc.) |
-| `sim_reset` | Reset simulation to defaults |
-| `sim_switch_scene` | Switch between experiment types |
-| `sim_highlight` | Highlight elements in the simulation |
+| `space_read_file` | Read one of the four allowed lab files |
+| `space_write_file` | Write one of the four allowed lab files (validated) |
+| `space_list_files` | List the allowed file names |
 
-The agent constructs tool definitions dynamically for each provider's API format (OpenAI-compatible or Anthropic). It handles the full tool-calling round-trip: parse tool calls from the LLM response, execute them locally, and send results back.
+The agent **cannot** run shell commands, access the network, read files outside the space, load external CDN scripts, or store/exfiltrate API keys. Provider/model lists come from the pi SDK `ModelRegistry`.
 
 ---
 
 ## Security
 
-**Zero server secrets.** This is not a claim — it is an architectural fact.
+**Runtime-only key, sandboxed agent.** Your provider key is sent over same-origin HTTPS for a single agent turn and used as a runtime-only `AuthStorage` override — it is never written to disk.
 
-- The server has no AI dependencies, no WebSocket, no API key storage
-- The AI agent runs entirely in the browser (`js/ai/agent.js`)
-- API keys are stored in localStorage and sent directly to LLM APIs via `fetch()`
-- The server never receives, stores, or transmits API keys
+- The server-side pi SDK agent runs with only `space_read_file` / `space_write_file` / `space_list_files`
+- API keys live in page memory only; provider/model optionally in `localStorage`
+- Lab code runs in a sandboxed iframe (null origin) so it cannot reach the parent app or your `sessionStorage`
+- The repo root is never served — only allow-listed assets (`/css`, `/js`, `index.html`, logo, `SECURITY.md`)
+- New visitors get a temporary private session automatically with an `HttpOnly`, `SameSite=Strict`, browser-session cookie
 - Full security model documented in [`SECURITY.md`](SECURITY.md)
 
 ---
@@ -141,14 +152,14 @@ The agent constructs tool definitions dynamically for each provider's API format
 | Category | Technology |
 |----------|-----------|
 | Backend | Node.js, Express |
-| Frontend | HTML5, CSS3, Canvas 2D API |
-| AI Agent | `js/ai/agent.js` (browser-side, fetch-based LLM client) |
+| Agent runtime | `@earendil-works/pi-coding-agent` (server-side pi SDK) |
+| Frontend | HTML5, CSS3, Canvas 2D API, p5.js, matter.js |
 | AI Providers | 18+ (OpenAI, Anthropic, DeepSeek, Groq, Google, Together...) |
-| Storage | localStorage (API keys), JSON files (experiments, formulas) |
-| Deploy | Render (free tier), render.yaml |
+| Storage | page memory for keys, localStorage for provider/model prefs, JSON files for temporary labs |
+| Deploy | Render Free demo, paid Render + disk for persistence |
 | Formats | JSON, CSV |
 
-Zero external frontend dependencies. No React, no Vue, no jQuery. No CDN scripts. All physics is hand-written Canvas 2D.
+Zero external frontend framework dependencies. No React, no Vue, no jQuery.
 
 ---
 
@@ -195,7 +206,7 @@ Full provider/model catalog at [`sources/pi-model-catalog.json`](sources/pi-mode
 
 ```
 flabs/
-├── server.js                  # Express static server + REST API
+├── server.js                  # Express + REST API + server-side pi SDK agent
 ├── index.html                 # Main app (Launchpad + Space View)
 ├── flabs_logo.png             # Project logo
 ├── SECURITY.md                # Security model documentation
@@ -203,8 +214,8 @@ flabs/
 ├── css/
 │   └── style.css              # Dark-theme responsive UI
 ├── js/
-│   ├── main.js                # App entry, view switching, API key management
-│   ├── ai/agent.js            # Browser-side AI agent (LLM calls from browser)
+│   ├── main.js                # App entry, view switching, lab/sandbox management
+│   ├── ai/agent.js            # Thin browser bridge to /api/agent/chat
 │   └── experiment/api.js      # Measurement API (live data, CSV/JSON export)
 ├── experiments/
 │   ├── manifest.json          # Space registry
@@ -232,11 +243,15 @@ npm start
 ```
 
 ### Enter Your API Key
-Click the key icon in the top bar. Paste your API key. Supported: OpenAI, Anthropic, DeepSeek, Groq, Google, 13+ more.
+The provider dialog opens automatically. Choose a provider/model and paste your API key. It is sent to the server **only for one agent turn** (over same-origin HTTPS) and never persisted. Supported: OpenAI, Anthropic, DeepSeek, Groq, Google, 13+ more.
 
-*Without an API key:* All physics experiments, controls, data panels, and measurements work. Only the AI chat shows a prompt to enter a key.
+*Without an API key:* All physics experiments, controls, data panels, and measurements work. Only the AI builder requires a key.
 
 ### Deploy to Render
+
+Render Free is good for the live hackathon demo, but its filesystem is temporary. Private sessions and labs can disappear after spin-down, restart, or redeploy.
+
+For Free deploys, keep `FLABS_DATA_PERSISTENT=false` so the app shows the warning. For real persistence, use a paid Render web service with a persistent disk mounted at `FLABS_DATA_DIR` and set `FLABS_DATA_PERSISTENT=true`.
 
 ```bash
 git push origin main
@@ -253,14 +268,15 @@ Built for **[DSH Hacks V1](https://dsh-hacks-v1.devpost.com)** — AI x STEM Edu
 
 **What works:**
 - Two complete physics experiments (Water Rocket, Wave Interference)
-- Browser-side AI agent with tool calling (18+ providers)
+- Server-side pi SDK agent that builds your own labs via chat (18+ providers)
+- Sandboxed lab iframes (null origin) for generated code isolation
 - Live measurement streaming, data panel, CSV export
-- Zero-server-secrets security architecture
-- One-click Render deploy
+- Temporary private browser sessions, no signup or login
+- Runtime-only key handling (never persisted)
 
-**What is being built:**
+**Roadmap / Future Work:**
 - More experiments (pendulum, optics, electricity)
-- Experiment builder via AI chat
+- Self-hosted deployment option with process isolation (dedicated server, reverse proxy, HTTPS) for full persistence beyond the free-tier demo
 - Community-contributed experiment spaces
 
 ---

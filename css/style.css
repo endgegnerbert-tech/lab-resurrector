@@ -392,35 +392,42 @@ html, body { height: 100%; overflow: hidden; }
   width: 100%;
   height: 100px;
   border-radius: var(--radius-sm);
-  background: #07070c;
+  background: linear-gradient(135deg, #0b0b16 0%, #14142a 100%);
   overflow: hidden;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   color: var(--text-dim);
   font-size: 0.68rem;
   border: 1px solid var(--border);
   position: relative;
+  transition: border-color 0.18s, background 0.18s;
 }
-.space-card .card-preview iframe.preview-frame {
-  width: 100%;
-  height: 100%;
-  border: 0;
-  pointer-events: none;
-  opacity: 0.85;
-  transition: opacity 0.2s;
+.space-card:hover .card-preview {
+  border-color: #3a3a5e;
+  background: linear-gradient(135deg, #12122a 0%, #1b1b3a 100%);
 }
-.space-card:hover .card-preview iframe.preview-frame {
+.space-card .card-preview .preview-glyph {
+  font-size: 1.7rem;
+  color: #7c6cf0;
+  opacity: 0.8;
+  line-height: 1;
+  transition: opacity 0.18s, transform 0.18s;
+}
+.space-card:hover .card-preview .preview-glyph {
   opacity: 1;
+  transform: scale(1.08);
 }
-.space-card .card-preview .preview-fallback {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.space-card .card-preview .preview-label {
+  font-size: 0.62rem;
   color: var(--text-dim);
-  font-size: 0.65rem;
+  max-width: 90%;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .space-card .card-time {
   font-size: 0.62rem;
@@ -794,16 +801,26 @@ html, body { height: 100%; overflow: hidden; }
   border-radius: 8px;
   border-bottom-left-radius: 2px;
   display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.typing .typing-text {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.typing .dots {
+  display: inline-flex;
   gap: 3px;
 }
-.typing span {
+.typing .dots span {
   width: 5px; height: 5px;
   background: var(--text-dim);
   border-radius: 50%;
   animation: bounce 1.4s infinite;
 }
-.typing span:nth-child(2) { animation-delay: 0.2s; }
-.typing span:nth-child(3) { animation-delay: 0.4s; }
+.typing .dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing .dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes bounce {
   0%, 60%, 100% { transform: translateY(0); }
   30% { transform: translateY(-4px); }

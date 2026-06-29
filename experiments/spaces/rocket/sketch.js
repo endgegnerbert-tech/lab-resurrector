@@ -548,7 +548,8 @@
 
   // ── postMessage bridge ───────────────────
   window.addEventListener('message', (event) => {
-    if (event.origin !== window.location.origin) return;
+    // Sandbox makes our origin "null"; bind to the parent window instead.
+    if (window.parent && event.source !== window.parent) return;
     const msg = event.data;
 
     switch (msg.type) {
@@ -590,7 +591,7 @@
         waterMass: Math.max(0, state.waterMass),
         maxSpeed: state.maxSpeed
       }
-    }, window.location.origin);
+    }, '*');
   }
 
   // ── Main loop ────────────────────────────

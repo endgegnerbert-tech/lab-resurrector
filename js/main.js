@@ -1,8 +1,8 @@
 /**
  * main.js — flabs app entry point
  *
- * Two views: launchpad (card grid) <-> space (iframe + sidebar)
- * AI: browser-native via AiAgent (keys never reach server)
+ * Two views: launchpad (card grid) <-> space (sandboxed iframe + sidebar)
+ * AI: server-side pi SDK agent via AiAgent bridge (keys sent per-turn, never persisted)
  */
 
 (function () {
@@ -15,7 +15,6 @@
     const emptyState = document.getElementById('empty-state');
     const newSpaceBtn = document.getElementById('btn-new-space');
     const apiKeyBtn = document.getElementById('btn-api-key');
-    const accountBtn = document.getElementById('btn-account');
     const apiKeyStatus = document.getElementById('api-key-status');
     const backBtn = document.getElementById('btn-back');
     const deleteBtn = document.getElementById('btn-delete-space');
@@ -43,23 +42,13 @@
     const authClearBtn = document.getElementById('btn-auth-clear');
     const authCloseBtn = document.getElementById('btn-auth-close');
 
-    const accountModal = document.getElementById('account-modal');
-    const accountCurrent = document.getElementById('account-current');
-    const accountCreateForm = document.getElementById('account-create-form');
-    const accountLoginForm = document.getElementById('account-login-form');
-    const accountDisplayName = document.getElementById('account-display-name');
-    const accountRecoveryCode = document.getElementById('account-recovery-code');
-    const accountRecoveryResult = document.getElementById('account-recovery-result');
-    const accountLogoutBtn = document.getElementById('btn-account-logout');
-    const accountCloseBtn = document.getElementById('btn-account-close');
-
     let spaces = [];
     let currentSpace = null;
     let isPlaying = true;
     let isDeleting = false;
     let providerCatalog = [];
     let authConfig = readStoredAuth();
-    let account = null;
+    let privateSession = null;
     let didRestoreLastSpace = false;
     let isAiProcessing = false;
 
@@ -80,18 +69,18 @@
     function readStoredAuth() {
       const prefs = parseStoredAuth(localStorage.getItem('flabs_auth_prefs'), true, false)
         || parseStoredAuth(localStorage.getItem('flabs_auth'), true, false);
-      const runtime = parseStoredAuth(sessionStorage.getItem('flabs_auth_runtime'), false, true)
-        || parseStoredAuth(sessionStorage.getItem('flabs_auth'), false, true);
+      sessionStorage.removeItem('flabs_auth');
+      sessionStorage.removeItem('flabs_auth_runtime');
+      localStorage.removeItem('flabs_auth');
       return {
-        provider: runtime?.provider || prefs?.provider || '',
-        modelId: runtime?.modelId || prefs?.modelId || '',
-        apiKey: runtime?.apiKey || '',
+        provider: prefs?.provider || '',
+        modelId: prefs?.modelId || '',
+        apiKey: '',
         remember: !!prefs,
       };
     }
 
     function persistAuth() {
-      sessionStorage.removeItem('flabs_auth');
       localStorage.removeItem('flabs_auth');
       sessionStorage.removeItem('flabs_auth_runtime');
       localStorage.removeItem('flabs_auth_prefs');
@@ -99,14 +88,10 @@
         const prefs = JSON.stringify({ provider: authConfig.provider, modelId: authConfig.modelId });
         if (authConfig.remember) localStorage.setItem('flabs_auth_prefs', prefs);
       }
-      if (authConfig.apiKey) {
-        sessionStorage.setItem('flabs_auth_runtime', JSON.stringify({ provider: authConfig.provider, modelId: authConfig.modelId, apiKey: authConfig.apiKey }));
-      }
     }
 
     function clearStoredAuth() {
       authConfig = { provider: '', modelId: '', apiKey: '', remember: false };
-      sessionStorage.removeItem('flabs_auth');
       localStorage.removeItem('flabs_auth');
       sessionStorage.removeItem('flabs_auth_runtime');
       localStorage.removeItem('flabs_auth_prefs');
@@ -135,37 +120,13 @@
       }
     }
 
-    function updateAccountUi() {
-      if (accountBtn) accountBtn.textContent = account ? '👤 ' + (account.displayName || 'Account') : '👤 Account';
-      if (accountCurrent) accountCurrent.textContent = account
-        ? 'Signed in as ' + (account.displayName || 'Demo account') + '. Private labs are visible only in this account.'
-        : 'Not signed in. Create a private account before making labs.';
-      if (accountLogoutBtn) accountLogoutBtn.classList.toggle('hidden', !account);
-    }
-
-    async function loadAccount() {
+    async function loadPrivateSession() {
       try {
-        const res = await fetch('/api/account', { credentials: 'same-origin' });
+        const res = await fetch('/api/session', { credentials: 'same-origin' });
         const data = await res.json();
-        account = data.user || null;
-      } catch (_) { account = null; }
-      updateAccountUi();
-      return account;
-    }
-
-    function openAccountModal() {
-      if (!accountModal) return;
-      accountRecoveryResult.classList.add('hidden');
-      accountRecoveryResult.textContent = '';
-      updateAccountUi();
-      accountModal.classList.remove('hidden');
-      accountModal.setAttribute('aria-hidden', 'false');
-    }
-
-    function closeAccountModal() {
-      if (!accountModal) return;
-      accountModal.classList.add('hidden');
-      accountModal.setAttribute('aria-hidden', 'true');
+        privateSession = data.user || null;
+      } catch (_) { privateSession = null; }
+      return privateSession;
     }
 
     /* ── Provider/model modal ───────────────── */
@@ -217,12 +178,12 @@
     function openAuthModal() {
       authConfig = readStoredAuth();
       populateProviderOptions(authConfig.provider);
-      authApiKey.value = authConfig.apiKey || '';
+      authApiKey.value = '';
       authRemember.checked = !!authConfig.remember;
-      authClearBtn.classList.toggle('hidden', !authConfig.apiKey);
+      authClearBtn.classList.toggle('hidden', !authConfig.apiKey && !authConfig.provider);
       authStorageNote.textContent = authRemember.checked
-        ? 'Provider/model stored in localStorage. Key stays in this browser session only.'
-        : 'Key stays only for this browser session.';
+        ? 'Provider/model stored in localStorage. Key stays only in page memory.'
+        : 'Key stays only in page memory.';
       authModal.classList.remove('hidden');
       authModal.setAttribute('aria-hidden', 'false');
       setTimeout(() => {
@@ -241,8 +202,8 @@
     });
     authRemember.addEventListener('change', () => {
       authStorageNote.textContent = authRemember.checked
-        ? 'Provider/model stored in localStorage. Key stays in this browser session only.'
-        : 'Key stays only for this browser session.';
+        ? 'Provider/model stored in localStorage. Key stays only in page memory.'
+        : 'Key stays only in page memory.';
     });
 
     /* ── Chat / AI helpers ──────────────────── */
@@ -269,6 +230,11 @@
     function handleAiChat() {
       const text = chatInput.value.trim();
       if (!text || isAiProcessing) return;
+      if (!authConfig.apiKey || !authConfig.provider || !authConfig.modelId) {
+        addChatSystemMessage('Choose a model and enter your API key to use the builder.');
+        openAuthModal();
+        return;
+      }
       chatInput.value = '';
       isAiProcessing = true;
       chatSend.disabled = true;
@@ -308,15 +274,30 @@
         const div = document.createElement('div');
         div.className = 'typing';
         div.id = 'typing-indicator';
-        div.innerHTML = '<span></span><span></span><span></span>';
+        div.innerHTML = '<span class="typing-text">Connecting to provider</span><span class="dots"><span></span><span></span><span></span></span>';
         chatMessages.appendChild(div);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+        // Cycle through clear phases so a long agent turn feels alive instead of frozen.
+        const phases = ['Connecting to provider', 'Agent is thinking', 'Writing lab files'];
+        let idx = 0;
+        const cycle = setInterval(() => {
+          const cur = document.getElementById('typing-indicator');
+          if (!cur) { clearInterval(cycle); return; }
+          idx = Math.min(idx + 1, phases.length - 1);
+          const t = cur.querySelector('.typing-text');
+          if (t) t.textContent = phases[idx];
+        }, 2200);
+        div.dataset.cycle = cycle;
       }
     });
 
     AiAgent.on('agent_done', () => {
       const typing = document.getElementById('typing-indicator');
-      if (typing) typing.remove();
+      if (typing) {
+        const cycle = typing.dataset.cycle;
+        if (cycle) clearInterval(Number(cycle));
+        typing.remove();
+      }
       const streamEl = chatMessages.querySelector('.message.ai.streaming');
       if (streamEl) {
         const textEl = streamEl.querySelector('.text');
@@ -330,7 +311,11 @@
 
     AiAgent.on('chat_error', (text) => {
       const typing = document.getElementById('typing-indicator');
-      if (typing) typing.remove();
+      if (typing) {
+        const cycle = typing.dataset.cycle;
+        if (cycle) clearInterval(Number(cycle));
+        typing.remove();
+      }
       const streamEl = chatMessages.querySelector('.message.ai.streaming');
       if (streamEl) streamEl.remove();
       addChatSystemMessage(text);
@@ -350,13 +335,13 @@
 
     AiAgent.on('tool_execute', (msg) => {
       if (msg.tool === 'sim_set_param' && spaceFrame && spaceFrame.contentWindow) {
-        spaceFrame.contentWindow.postMessage({ type: 'param:set', name: msg.name, value: msg.value }, window.location.origin);
+        spaceFrame.contentWindow.postMessage({ type: 'param:set', name: msg.name, value: msg.value }, '*');
       }
       if (msg.tool === 'sim_reset' && spaceFrame && spaceFrame.contentWindow) {
-        spaceFrame.contentWindow.postMessage({ type: 'control:reset' }, window.location.origin);
+        spaceFrame.contentWindow.postMessage({ type: 'control:reset' }, '*');
       }
       if (msg.tool === 'sim_highlight' && spaceFrame && spaceFrame.contentWindow) {
-        spaceFrame.contentWindow.postMessage({ type: 'sim_highlight', element: msg.element }, window.location.origin);
+        spaceFrame.contentWindow.postMessage({ type: 'sim_highlight', element: msg.element }, '*');
       }
       if (msg.tool === 'sim_switch_scene') {
         addChatSystemMessage('Switch scene: ' + msg.scene);
@@ -412,6 +397,7 @@
       spaceFrame.src = sp.path || '/experiments/spaces/' + sp.id + '/';
       fetchSpaceManifest(sp.id);
       addChatSystemMessage('Opened lab "' + sp.title + '".');
+      if (sp.private && !authConfig.apiKey) openAuthModal();
     }
 
     function closeSpace() {
@@ -465,18 +451,17 @@
         });
         const preview = document.createElement('div');
         preview.className = 'card-preview';
-        const pf = document.createElement('iframe');
-        pf.className = 'preview-frame';
-        pf.loading = 'lazy';
-        pf.src = sp.path || '/experiments/spaces/' + sp.id + '/';
-        pf.title = '';
-        const fallback = document.createElement('div');
-        fallback.className = 'preview-fallback';
-        fallback.textContent = 'lab preview';
-        preview.appendChild(pf);
-        preview.appendChild(fallback);
-        pf.addEventListener('load', () => { fallback.style.display = 'none'; });
-        pf.addEventListener('error', () => { fallback.style.display = 'flex'; });
+        // Static placeholder instead of a live iframe per card. Live preview-iframes
+        // each spun up a requestAnimationFrame loop and burned CPU on weak devices;
+        // the lab itself opens (with its real iframe) when the card is clicked.
+        const glyph = document.createElement('div');
+        glyph.className = 'preview-glyph';
+        glyph.textContent = '⚗';
+        const label = document.createElement('div');
+        label.className = 'preview-label';
+        label.textContent = sp.title || sp.id;
+        preview.appendChild(glyph);
+        preview.appendChild(label);
         const time = document.createElement('div');
         time.className = 'card-time';
         time.textContent = sp.createdAt ? new Date(sp.createdAt).toLocaleDateString() : '';
@@ -540,7 +525,7 @@
             const pvEl = document.getElementById(vid);
             if (pvEl) pvEl.textContent = v + (params[n].unit || '');
             if (spaceFrame && spaceFrame.contentWindow) {
-              spaceFrame.contentWindow.postMessage({ type: 'param:set', name: n, value: v }, window.location.origin);
+              spaceFrame.contentWindow.postMessage({ type: 'param:set', name: n, value: v }, '*');
             }
           };
         })(name, idSafe));
@@ -656,7 +641,7 @@
         playBtn.innerHTML = isPlaying ? '&#9646;&#9646;' : '&#9654;';
         playBtn.title = isPlaying ? 'Pause' : 'Play';
         if (spaceFrame && spaceFrame.contentWindow) {
-          spaceFrame.contentWindow.postMessage({ type: 'control:play', playing: isPlaying }, window.location.origin);
+          spaceFrame.contentWindow.postMessage({ type: 'control:play', playing: isPlaying }, '*');
         }
       });
     }
@@ -664,7 +649,7 @@
     if (resetBtn) {
       resetBtn.addEventListener('click', () => {
         if (spaceFrame && spaceFrame.contentWindow) {
-          spaceFrame.contentWindow.postMessage({ type: 'control:reset' }, window.location.origin);
+          spaceFrame.contentWindow.postMessage({ type: 'control:reset' }, '*');
         }
         if (window.ExperimentAPI) window.ExperimentAPI.clear();
         addChatSystemMessage('Reset');
@@ -673,7 +658,6 @@
 
     document.addEventListener('keydown', (e) => {
       if (!authModal.classList.contains('hidden') && e.key === 'Escape') { e.preventDefault(); closeAuthModal(); return; }
-      if (accountModal && !accountModal.classList.contains('hidden') && e.key === 'Escape') { e.preventDefault(); closeAccountModal(); return; }
       if (e.key === ' ' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'INPUT') {
         e.preventDefault();
         if (playBtn) playBtn.click();
@@ -687,7 +671,9 @@
     }
 
     window.addEventListener('message', (event) => {
-      if (event.origin !== window.location.origin) return;
+      // The lab iframe is sandboxed (null origin), so we cannot rely on origin
+      // equality. Instead bind strictly to the one frame we own.
+      if (!spaceFrame || event.source !== spaceFrame.contentWindow) return;
       const d = event.data;
       if (d && d.type === 'experiment:measurement' && window.ExperimentAPI && d.payload) {
         window.ExperimentAPI.emitMeasurement(d.payload);
@@ -695,67 +681,6 @@
     });
 
     /* ── Navigation ─────────────────────────── */
-    if (accountBtn) accountBtn.addEventListener('click', openAccountModal);
-    if (accountCloseBtn) accountCloseBtn.addEventListener('click', closeAccountModal);
-    document.querySelectorAll('[data-close-account="true"]').forEach((el) => {
-      el.addEventListener('click', closeAccountModal);
-    });
-
-    if (accountCreateForm) {
-      accountCreateForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          const res = await fetch('/api/account/create', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ displayName: accountDisplayName.value.trim() }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Could not create account');
-          account = data.user;
-          updateAccountUi();
-          accountRecoveryResult.textContent = 'Save this recovery code now. It is shown only once:\n\n' + data.recoveryCode;
-          accountRecoveryResult.classList.remove('hidden');
-          addChatSystemMessage('Private account created. Save your recovery code.');
-          await loadAndRenderSpaces();
-        } catch (err) { addChatSystemMessage(err.message); }
-      });
-    }
-
-    if (accountLoginForm) {
-      accountLoginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        try {
-          const res = await fetch('/api/account/login', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ recoveryCode: accountRecoveryCode.value.trim() }),
-          });
-          const data = await res.json();
-          if (!res.ok) throw new Error(data.error || 'Could not log in');
-          account = data.user;
-          updateAccountUi();
-          closeAccountModal();
-          addChatSystemMessage('Signed in. Private labs loaded.');
-          await loadAndRenderSpaces();
-        } catch (err) { addChatSystemMessage(err.message); }
-      });
-    }
-
-    if (accountLogoutBtn) {
-      accountLogoutBtn.addEventListener('click', async () => {
-        await fetch('/api/account/logout', { method: 'POST', credentials: 'same-origin' }).catch(() => {});
-        account = null;
-        currentSpace = null;
-        updateAccountUi();
-        closeAccountModal();
-        closeSpace();
-        await loadAndRenderSpaces();
-      });
-    }
-
     if (apiKeyBtn) apiKeyBtn.addEventListener('click', openAuthModal);
     if (authCloseBtn) authCloseBtn.addEventListener('click', closeAuthModal);
     document.querySelectorAll('[data-close-auth="true"]').forEach((el) => {
@@ -786,7 +711,8 @@
       const title = prompt('Name your new lab:');
       if (!title || !title.trim()) return;
       try {
-        if (!account) { openAccountModal(); throw new Error('Create a private account first.'); }
+        if (!privateSession) { privateSession = await loadPrivateSession(); }
+        if (!privateSession) throw new Error('Could not create a private browser session.');
         const res = await fetch('/api/spaces', {
           method: 'POST',
           credentials: 'same-origin',
@@ -815,19 +741,19 @@
     // Check if persistent storage is available
     fetch('/api/health', { credentials: 'same-origin' }).then(r=>r.json()).then(data => {
       const warn = document.getElementById('volatile-warning');
-      const note = document.getElementById('account-volatile-note');
       if (!data.persistent) {
         if (warn) warn.classList.remove('hidden');
-        if (note) note.classList.remove('hidden');
       }
     }).catch(() => {});
 
     setApiStatus('locked');
-    updateAccountUi();
-    loadAccount().then(loadAndRenderSpaces);
-    loadProviderCatalog();
+    loadPrivateSession().then(loadAndRenderSpaces);
+    loadProviderCatalog().then(() => {
+      if (!authConfig.apiKey) openAuthModal();
+    });
 
-    // Restore saved provider key for this browser session only.
+    // Restore provider/model prefs only. API keys stay in memory and are asked for
+    // again after reload so they do not sit in Web Storage.
     AiAgent.loadCatalog().then(() => {
       if (authConfig.apiKey && authConfig.provider) {
         configureAiForCurrentSpace();
