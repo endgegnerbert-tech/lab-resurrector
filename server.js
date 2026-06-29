@@ -486,10 +486,21 @@ function countManifestEntries(value) {
   return 0;
 }
 
-function buildAgentFinalText(rawText, touchedFiles, verification, manifest) {
+function looksLikeNoopAgentText(text) {
+  return /^(i checked the lab\.?|ich habe (das )?lab geprueft\.?|checked\.?)$/i.test(String(text || '').trim());
+}
+
+function looksLikeBuildRequest(message) {
+  return /\b(baue|bau|mach|mache|erstelle|experiment|simulation|simuliere|zeige|reihenschaltung|parallelschaltung|gleichreihenschaltung)\b/i.test(String(message || ''));
+}
+
+function buildAgentFinalText(rawText, touchedFiles, verification, manifest, userMessage) {
   if (!touchedFiles.size) {
     const note = String(rawText || '').trim();
-    return note || 'Ich habe nichts am Lab geaendert. Bitte beschreibe direkt, was gebaut werden soll, z.B. "Baue ein Reihenschaltung-und-Parallelschaltung-Experiment".';
+    const fallback = looksLikeBuildRequest(userMessage)
+      ? 'Ich habe nichts am Lab geaendert, obwohl ein Experiment angefragt wurde. Der Modelllauf hat keine Dateien geschrieben. Bitte sende den Bauauftrag nochmal; wenn es wieder passiert, waehle ein staerkeres Modell.'
+      : 'Ich habe nichts am Lab geaendert. Bitte beschreibe direkt, was gebaut werden soll, z.B. "Baue ein Reihenschaltung-und-Parallelschaltung-Experiment".';
+    return !note || looksLikeNoopAgentText(note) ? fallback : note;
   }
   const title = manifest?.title || 'Your private lab';
   const controls = countManifestEntries(manifest?.parameters);
@@ -699,7 +710,7 @@ Rules:
   const verification = verifyPrivateSpace(userId, spaceId);
   const updatedManifest = readPrivateManifest(userId, spaceId);
   return {
-    text: buildAgentFinalText(text, touchedFiles, verification, updatedManifest),
+    text: buildAgentFinalText(text, touchedFiles, verification, updatedManifest, message),
     touchedFiles: [...touchedFiles],
     toolEvents,
   };
