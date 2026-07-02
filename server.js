@@ -692,6 +692,14 @@ Rules:
 
   let text = '';
   const toolEvents = [];
+  const buildRequest = looksLikeBuildRequest(message);
+  const promptText = buildRequest
+    ? `${String(message || '').slice(0, 7600)}
+
+This is a build request. You must update the lab files for the currently open private space.
+Minimum expected writes: experiment.json, sketch.js, sources.json. Write index.html too if it is not already the minimal canvas shell.
+Do not finish with only an explanation. Do not say you checked the lab. Use the required research tools, then write files, verify, and keep the final answer short.`
+    : String(message || '').slice(0, 8000);
   const unsubscribe = session.subscribe((event) => {
     if (event.type === 'message_update' && event.assistantMessageEvent.type === 'text_delta') {
       text += event.assistantMessageEvent.delta;
@@ -701,7 +709,13 @@ Rules:
   });
 
   try {
-    await session.prompt(String(message || '').slice(0, 8000));
+    await session.prompt(promptText);
+    if (buildRequest && touchedFiles.size === 0) {
+      text = '';
+      await session.prompt(`You did not write any lab files. This is a build request, so complete it now.
+Call the required research tools if needed, then write experiment.json, sketch.js, sources.json, and index.html if needed.
+The user asked: ${String(message || '').slice(0, 1000)}`);
+    }
   } finally {
     unsubscribe?.();
     session.dispose();
